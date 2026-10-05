@@ -17,4 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `REUSED_COMPONENTS.md`: Dependency tracking and third-party licence registry.
 - Trivial Circom circuit (`circuits/trivial.circom`) and automated compilation/proving pipeline (`circuits/scripts/build_trivial.sh`).
 - Verified Groth16 witness calculation, proof generation, and verification pipeline on BN128 curve.
+- Production-grade Age Verification Circuit (`circuits/aegis_age.circom`) enforcing `dob <= ref_date - 180000`, Poseidon nullifier derivation, and session nonce binding (1,590 R1CS constraints).
+- Verifier SDK & backend service (`verifier/server.js`) implementing challenge nonces, Groth16 cryptographic verification, replay rejection, and app-scoped nullifier registry.
+- AegisID Engineering Workbench (`demo-site/`): High-density dual-system UI (Relying Party Portal & Client Prover Console) with real-time telemetry, disclosure audit table, and zero-PII verification.
+
 
