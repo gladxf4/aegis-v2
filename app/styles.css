@@ -254,17 +254,32 @@ h1 {
   list-style: none;
 }
 .journey li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   min-width: 0;
-  padding: 10px 12px;
   border: 1px solid #e2e8e2;
   border-radius: 12px;
   background: #fafbf9;
   color: #738078;
   font-size: 11px;
   font-weight: 650;
+}
+.journey-action {
+  display: flex;
+  width: 100%;
+  min-height: 45px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.journey-action:focus-visible {
+  outline: 3px solid #7eb694;
+  outline-offset: 2px;
 }
 .journey li.is-current {
   border-color: #a9c9b4;

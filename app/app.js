@@ -1073,7 +1073,6 @@ async function loadCredentials() {
   try {
     const sample = await getDemoSample();
     state.credentials = [sample];
-    state.selected = sample;
   } catch (error) {
     state.credentials = [];
     state.selected = null;
@@ -1087,6 +1086,15 @@ async function loadCredentials() {
 function bindEvents() {
   for (const tab of el.tabs) {
     tab.addEventListener("click", () => switchView(tab.dataset.view));
+  }
+  for (const step of el.journeySteps) {
+    const action = step.querySelector(".journey-action");
+    action.addEventListener("click", () => {
+      document.getElementById(action.dataset.journeyTarget)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    });
   }
   el.newChallenge.addEventListener("click", newChallenge);
   el.newSample.addEventListener("click", useAnotherSample);
@@ -1135,11 +1143,9 @@ async function init() {
   try {
     await Promise.all([loadHealth(), loadCredentials()]);
     renderCredentials();
-    if (state.selected) {
-      selectCredential(state.selected);
-    }
     renderTests();
     updateTestSummary();
+    updateButtons();
     await newChallenge();
   } catch (error) {
     console.error(error);

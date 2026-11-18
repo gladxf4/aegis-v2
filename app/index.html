@@ -55,16 +55,22 @@
 
         <ol class="journey" aria-label="Verification steps">
           <li data-journey-step="1">
-            <span class="journey-number">1</span>
-            <span>Choose a credential</span>
+            <button class="journey-action" type="button" data-journey-target="credentialList">
+              <span class="journey-number">1</span>
+              <span>Choose a credential</span>
+            </button>
           </li>
           <li data-journey-step="2">
-            <span class="journey-number">2</span>
-            <span>Prove it on this device</span>
+            <button class="journey-action" type="button" data-journey-target="proveButton">
+              <span class="journey-number">2</span>
+              <span>Prove it on this device</span>
+            </button>
           </li>
           <li data-journey-step="3">
-            <span class="journey-number">3</span>
-            <span>Get a clear result</span>
+            <button class="journey-action" type="button" data-journey-target="resultPanel">
+              <span class="journey-number">3</span>
+              <span>Get a clear result</span>
+            </button>
           </li>
         </ol>
 
@@ -106,7 +112,7 @@
 
         <div class="layout">
           <div class="column">
-            <section class="panel">
+            <section class="panel" id="credentialPanel">
               <div class="panel-head">
                 <h2>Choose a credential</h2>
                 <span class="muted small">stays on this device</span>
@@ -201,7 +207,7 @@
           </div>
 
           <div class="column">
-            <section class="panel panel-result" aria-live="polite">
+            <section id="resultPanel" class="panel panel-result" aria-live="polite">
               <div class="panel-head">
                 <h2>Verification receipt</h2>
                 <div class="result-actions">
