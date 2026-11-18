@@ -45,10 +45,10 @@
           <div class="heading-actions">
             <img
               class="proof-art"
-              src="/assets/proof-path.svg"
-              alt="A credential stays on the device while a private proof is checked."
-              width="232"
-              height="152"
+              src="/assets/aegis-logo.png"
+              alt="AegisID shield, local credential card, and verified result."
+              width="500"
+              height="500"
             />
           </div>
         </div>
@@ -342,20 +342,28 @@ prove    EdDSA_verify(
           <div class="panel-head">
             <h2>Request path</h2>
           </div>
-          <ol class="steps">
-            <li>
-              <code>GET /api/challenge</code> returns a signed token with a nonce, application id,
-              and reference date.
-            </li>
-            <li>
-              The browser builds the witness from a local credential and calls
-              <code>snarkjs.groth16.fullProve</code>.
-            </li>
-            <li>
-              <code>POST /api/verify</code> checks the token, public signals, trusted issuer hash,
-              and Groth16 proof, then records the nullifier.
-            </li>
-          </ol>
+          <div class="protocol-flow">
+            <img
+              src="/assets/proof-path.svg"
+              alt="Credential stays local while a private proof travels to the verifier."
+              width="232"
+              height="152"
+            />
+            <ol class="steps">
+              <li>
+                <code>GET /api/challenge</code> returns a signed token with a nonce, application id,
+                and reference date.
+              </li>
+              <li>
+                The browser builds the witness from a local credential and calls
+                <code>snarkjs.groth16.fullProve</code>.
+              </li>
+              <li>
+                <code>POST /api/verify</code> checks the token, public signals, trusted issuer hash,
+                and Groth16 proof, then records the nullifier.
+              </li>
+            </ol>
+          </div>
         </section>
       </section>
     </main>

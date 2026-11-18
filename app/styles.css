@@ -197,7 +197,7 @@ h1 {
 }
 .proof-art {
   display: block;
-  width: min(232px, 20vw);
+  width: min(188px, 17vw);
   height: auto;
   margin: 0 2px -2px 0;
 }
@@ -950,6 +950,18 @@ summary:focus-visible {
 .plain-list strong {
   color: var(--ink);
 }
+.protocol-flow {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.55fr) minmax(0, 1.45fr);
+  align-items: center;
+  gap: 20px;
+}
+.protocol-flow img {
+  display: block;
+  width: min(100%, 232px);
+  height: auto;
+  justify-self: center;
+}
 .site-footer {
   padding: 19px 0;
   border-top: 1px solid var(--line);
@@ -1086,6 +1098,12 @@ summary:focus-visible {
   }
   .session {
     grid-template-columns: 1fr 1fr;
+  }
+  .protocol-flow {
+    grid-template-columns: 1fr;
+  }
+  .protocol-flow img {
+    width: min(232px, 70vw);
   }
   .session-item {
     border-bottom: 1px solid #dce8df;

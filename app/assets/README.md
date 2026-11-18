@@ -1,9 +1,9 @@
 # AegisID artwork
 
-These two small SVGs are original, hand-authored interface artwork for the project:
+The app's visual assets:
 
-- `../favicon.svg` is the shield and checkmark used for the brand and browser tab.
-- `proof-path.svg` illustrates the local credential → private proof → verifier result flow.
+- `aegis-logo.png` is the brand image supplied for the project.
+- `../favicon.svg` is a compact shield-and-checkmark mark for the browser tab and header.
+- `proof-path.svg` is original, hand-authored artwork for the local credential → private proof → verifier result flow.
 
-They use editable vector paths and the app's existing palette. They contain no external
-images, fonts, embedded raster data, or generated content dependencies.
+The SVG artwork uses the app's existing palette. The page loads no external images or fonts.
