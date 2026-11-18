@@ -41,7 +41,7 @@ The local default configuration is:
 Imported credentials are parsed in memory. The browser sends only the proof, public
 signals, and challenge token to the verifier.
 
-The first proof downloads the 2.5 MB WASM and 5.0 MB proving key. Later proofs reuse
+The first proof downloads the 3.1 MiB WASM and 5.0 MiB proving key. Later proofs reuse
 the HTTP cache.
 
 The minor, incomplete-KYC, expired, and altered-signature credentials fail during
@@ -57,6 +57,8 @@ npm test
 The suite covers:
 
 - a valid adult proof;
+- witness failure for an incomplete-KYC credential;
+- witness failure for an expired credential;
 - witness failure for an underage credential;
 - witness failure for an altered signature;
 - a valid proof from an untrusted issuer;
@@ -135,7 +137,7 @@ variables are:
 | `CHALLENGE_SECRET`         | Yes in production | HMAC key for challenge tokens                            |
 | `APP_ID`                   | No                | Application name used to derive the field element app id |
 | `ISSUER_KEY_HASH`          | No                | Overrides the trusted hash from `config/issuer.json`     |
-| `CHALLENGE_TTL_SECONDS`    | No                | Challenge lifetime, default 300                          |
+| `CHALLENGE_TTL_SECONDS`    | No                | Challenge lifetime, default 300, maximum 3600            |
 | `AEGIS_DEMO`               | No                | `1` enables `POST /api/reset`; keep unset in production  |
 | `UPSTASH_REDIS_REST_URL`   | No                | Redis REST endpoint                                      |
 | `UPSTASH_REDIS_REST_TOKEN` | No                | Redis REST token                                         |

@@ -136,13 +136,13 @@ waste could forge proofs for the circuit.
 
 ## Artifacts
 
-| File                                             |   Size | Committed | Purpose             |
-| ------------------------------------------------ | -----: | --------- | ------------------- |
-| `app/artifacts/age_proof.wasm`                   | 2.5 MB | Yes       | Witness generation  |
-| `app/artifacts/age_proof_final.zkey`             | 5.0 MB | Yes       | Groth16 proving     |
-| `circuits/build/age_proof_verification_key.json` | 3.6 KB | Yes       | Server verification |
-| `circuits/build/age_proof.r1cs`                  | 1.7 MB | No        | Constraint system   |
-| `circuits/build/age_proof.sym`                   | 1.4 MB | No        | Debug symbols       |
+| File                                             |    Size | Committed | Purpose             |
+| ------------------------------------------------ | ------: | --------- | ------------------- |
+| `app/artifacts/age_proof.wasm`                   | 3.1 MiB | Yes       | Witness generation  |
+| `app/artifacts/age_proof_final.zkey`             | 5.0 MiB | Yes       | Groth16 proving     |
+| `circuits/build/age_proof_verification_key.json` |  3.6 KB | Yes       | Server verification |
+| `circuits/build/age_proof.r1cs`                  |  1.7 MB | No        | Constraint system   |
+| `circuits/build/age_proof.sym`                   |  1.4 MB | No        | Debug symbols       |
 
 The browser downloads the WASM and proving key on first use. The verification key is
 small and loaded by the API function.

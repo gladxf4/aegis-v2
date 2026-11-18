@@ -76,6 +76,10 @@ test("a valid proof is accepted once and the token cannot be replayed", async ()
   assert.equal(first.status, 200);
   assert.equal(first.body.verified, true);
   assert.match(first.body.nullifier, /^\d+$/);
+  assert.deepEqual(first.body.claims, { kyc_verified: true, age_over_18: true });
+  assert.equal(first.body.policy, "AegisID-KYC-Age-v1");
+  assert.doesNotThrow(() => new Date(first.body.verified_at).toISOString());
+  assert.equal(Object.hasOwn(first.body, "valid_until"), false);
 
   const replay = await request("POST", "/api/verify", {
     token: issued.token,

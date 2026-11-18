@@ -73,9 +73,11 @@ different issuers and rules.
    holder identifier, Aadhaar value, document, score, or credential UID.
 
 The Web2 deployment is the website, serverless API, and Redis-backed challenge state.
-The EVM testnet is used only for public issuer-trust metadata. Hosting the dApp on
-Vercel does not put personal data on-chain or prevent the browser from using a wallet
-and public blockchain.
+The prototype supports an optional EVM testnet registry for public issuer-trust
+metadata; the current public deployment uses the synthetic issuer hash from local
+configuration until a registry is deployed and configured. Hosting the dApp on Vercel
+does not put personal data on-chain or prevent the browser from using a wallet and
+public blockchain.
 
 ## India pilot boundary
 

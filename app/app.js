@@ -648,14 +648,16 @@ async function submit() {
         type: "aegisid-verification-receipt",
         version: 1,
         verified: true,
+        policy: body.policy,
         claims: body.claims,
         app_id: body.app_id,
         challenge_id: body.challenge_id,
         ref_date: body.ref_date,
         issuer_key_hash: body.issuer_key_hash,
+        issuer_registry: body.issuer_registry,
         nullifier: body.nullifier,
         verify_ms: body.verify_ms,
-        verified_at: new Date().toISOString()
+        verified_at: body.verified_at
       };
       el.copyReceipt.hidden = false;
       setResult(

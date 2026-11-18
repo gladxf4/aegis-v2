@@ -39,7 +39,7 @@ accept or reject
 ### Circuit
 
 `circuits/age_proof.circom` defines the relation. It uses Circomlib Poseidon,
-comparators, and `EdDSAPoseidonVerifier`. The compiled output is 9,713 constraints
+comparators, and `EdDSAPoseidonVerifier`. The compiled output is 9,969 constraints
 on BN254.
 
 The circuit verifies the KYC status and expiry with the age predicate. It treats the issuer public key as private and exposes only

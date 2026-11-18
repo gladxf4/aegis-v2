@@ -171,7 +171,6 @@ module.exports = async function handler(req, res) {
     issuer_key_hash: issuerHash,
     verify_ms: Math.round(verifyMs * 100) / 100,
     store: store.backend,
-    verified_at: verifiedAt,
-    valid_until: new Date(challenge.payload.exp * 1000).toISOString()
+    verified_at: verifiedAt
   });
 };

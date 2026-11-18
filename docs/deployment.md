@@ -58,7 +58,9 @@ Redeploy after changing an environment variable. Vercel does not inject new valu
 into an existing deployment.
 
 `CHALLENGE_SECRET` is the HMAC key for challenge tokens. Rotating it invalidates
-outstanding challenges but leaves nullifiers intact.
+outstanding challenges but leaves nullifiers intact. Production requires at least 32
+UTF-8 bytes; generate a high-entropy value rather than choosing a phrase. Challenge
+lifetimes are capped at one hour even if a larger value is configured.
 
 `APP_ID` is a name. The server hashes it with SHA-256 and reduces the result into the
 BN254 scalar field. Use a different name per environment, because the app id scopes

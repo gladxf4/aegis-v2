@@ -147,6 +147,17 @@ over and review those headers.
 - Legal compliance and data-protection review.
 - Mobile native clients.
 
+## Dependency audit
+
+The 2026-11-18 npm audit found no advisories in production dependencies. The full
+dependency tree reported a low-severity advisory for `elliptic@6.6.1`, brought in
+through the development-only `circomlibjs` → `ethers` chain. The advisory concerns
+ECDSA signature generation; this repository uses Circomlibjs for BabyJubjub
+EdDSA-Poseidon and Poseidon fixture generation, not the affected ECDSA signing path.
+The advisory lists no patched release, so do not force an incompatible downgrade;
+recheck the dependency tree when an upstream fix is available. See the [GitHub
+Advisory](https://github.com/advisories/GHSA-848j-6mx2-7j84).
+
 ## Production checklist
 
 - Replace the demo issuer with a controlled issuer and protect its private key.

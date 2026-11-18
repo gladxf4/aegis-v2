@@ -31,6 +31,16 @@ test("underage credential does not produce a witness", async () => {
   await assert.rejects(() => prove(minor, context));
 });
 
+test("credential without completed KYC does not produce a witness", async () => {
+  const incomplete = credential("unverified-kyc");
+  await assert.rejects(() => prove(incomplete, context));
+});
+
+test("expired credential does not produce a witness", async () => {
+  const expired = credential("expired");
+  await assert.rejects(() => prove(expired, context));
+});
+
 test("altered signature does not produce a witness", async () => {
   const altered = credential("altered");
   await assert.rejects(() => prove(altered, context));

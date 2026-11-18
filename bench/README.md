@@ -28,7 +28,7 @@ file. The constraint count comes from the `.r1cs` rather than a hard-coded value
 ## Reading the numbers
 
 Node timings are indicative only. The browser prover runs in a different runtime
-and pays for fetching the 2.5 MB witness generator and the 5.0 MB proving key.
+and pays for fetching the 3.1 MiB witness generator and the 5.0 MiB proving key.
 Measure a deployment with browser performance tooling before making claims about
 user-perceived latency.
 

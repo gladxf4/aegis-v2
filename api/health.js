@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
     issuer_registry_required: config.requireOnchainIssuerRegistry,
     issuer_registry_address: config.issuerRegistryAddress,
     evm_chain_id: config.chainRegistryConfigured ? config.evmChainId : null,
-    challenge_configured: Boolean(config.challengeSecret),
+    challenge_configured: config.challengeSecretValid,
     challenge_ttl_seconds: config.challengeTtlSeconds,
     store: store.backend,
     store_ready: storeReady,

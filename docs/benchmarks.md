@@ -35,35 +35,29 @@ Environment:
 | Circuit     | `age_proof`  |
 | Constraints | 9,969        |
 
-Five runs:
+Five runs, 2026-11-18:
 
 | Stage              |    Median |   Minimum |   Maximum |
 | ------------------ | --------: | --------: | --------: |
-| Witness generation |   41.2 ms |   40.3 ms |   42.8 ms |
-| Proving            |  260.5 ms |  260.0 ms |  269.3 ms |
-| Verification       |    6.1 ms |   5.77 ms |   6.63 ms |
-| Peak memory        |  772.3 MB |  685.7 MB |  843.7 MB |
-| Proof JSON         | 722 bytes | 720 bytes | 724 bytes |
+| Witness generation |  56.97 ms |  56.13 ms |  69.36 ms |
+| Proving            |  381.8 ms | 370.33 ms | 383.53 ms |
+| Verification       |    8.9 ms |    6.4 ms |   9.02 ms |
+| Peak memory        |  767.2 MB |  717.2 MB |  883.8 MB |
+| Proof JSON         | 722 bytes | 721 bytes | 725 bytes |
 
 The first run is labelled cold and the rest warm. The harness reloads the proving key
 for each proof, so the difference mostly reflects process and cache warm-up.
 
-A separate run executed while the test suite was also running produced a 563 ms
-median proving time. Do not benchmark while other CPU-heavy work is active.
+A run executed while the test suite was also active produced slower results. Keep
+other CPU-heavy processes idle when collecting comparable measurements.
 
 ## Browser smoke test
 
-The same machine was driven with headless Chrome against a local server:
-
-| Observation                             | Value                          |
-| --------------------------------------- | ------------------------------ |
-| First proof generation, adult fixture   | 348 to 361 ms                  |
-| Server-side verification in the request | 7.9 to 11.2 ms                 |
-| Page width at 390 px                    | 390 px, no horizontal overflow |
-| Test bench                              | 8 of 8 cases passed            |
-
-These are smoke-test numbers from a desktop browser. They are not a mobile benchmark
-and do not include the first download of the 2.5 MB WASM and 5.0 MB proving key.
+On 2026-11-18, the local demo was opened in a Chromium-based browser. A synthetic
+credential produced a proof that the local verifier accepted. Arrow-key navigation
+from the Test bench tab to the Protocol tab also worked. This was a functional smoke
+check, not a mobile-device or WCAG conformance audit. We did not measure the page at a
+390 px viewport in this revision.
 
 ## Interpretation
 
@@ -71,7 +65,7 @@ and do not include the first download of the 2.5 MB WASM and 5.0 MB proving key.
 - The proof is under 1 KB as JSON, so response size is not a concern.
 - Peak memory is dominated by the Node process and the proving key. A server does not
   need this memory because proving happens in the browser.
-- The browser must download about 7.5 MB of artifacts on first use. HTTP caching makes
+- The browser must download about 8.1 MiB of artifacts on first use. HTTP caching makes
   later proofs cheaper, but a cold mobile connection will notice the download.
 
 ## Limitations

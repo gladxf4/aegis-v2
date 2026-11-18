@@ -10,9 +10,10 @@ signature.
 `Poseidon(dob, credential_uid, kyc_verified, expires_at)`. The circuit constrains the
 signature and the trusted issuer key hash.
 
-**Consequences.** The relation now depends on a real signature check. The cost is
-9,713 constraints and a larger proving key. The scheme is not RSA, so it is not
-compatible with the original document format.
+**Consequences.** The relation now depends on a real signature check. The original
+age-only relation used 9,713 constraints; adding signed KYC status and expiry brought
+the current circuit to 9,969. The scheme is not RSA, so it is not compatible with the
+original document format.
 
 ## ADR-002: Prove in the browser
 
@@ -23,7 +24,7 @@ which meant the verifier received the private inputs.
 server receives only the proof, public signals, and challenge token.
 
 **Consequences.** Private inputs no longer cross the network. The browser must
-download about 7.5 MB of artifacts and spend a few hundred milliseconds proving on a
+download about 8.1 MiB of artifacts and spend a few hundred milliseconds proving on a
 desktop. The server cannot inspect or log private inputs even if asked to.
 
 ## ADR-003: Use stateless HMAC challenge tokens
@@ -74,8 +75,9 @@ purposes. Changing the name changes every nullifier.
 **Context.** Real identity documents are not available for a prototype and should not
 be placed in a repository.
 
-**Decision.** Generate a local BabyJubjub key and four signed fixtures: adult, minor,
-altered signature, and unrecognized issuer.
+**Decision.** The first version generated four signed fixtures: adult, minor, altered
+signature, and unrecognized issuer. The current generator adds incomplete-KYC and
+expired cases as well.
 
 **Consequences.** The demo is reproducible. The fixtures are public and must not be
 treated as credentials. The private issuer key is gitignored.

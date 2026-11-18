@@ -38,6 +38,8 @@ Demonstrate a reusable issuer-signed KYC and age-eligibility proof flow in a bro
 | Case                      | Expected result                                            | Where it is covered                            |
 | ------------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
 | Valid adult credential    | `200`, `verified: true`                                    | `tests/proof.test.js`, `tests/api.test.js`, UI |
+| Incomplete KYC claim      | Witness generation fails                                   | `tests/proof.test.js`, UI                      |
+| Expired KYC credential    | Witness generation fails                                   | `tests/proof.test.js`, UI                      |
 | Underage credential       | Witness generation fails                                   | `tests/proof.test.js`, UI                      |
 | Altered signature         | Witness generation fails                                   | `tests/proof.test.js`, UI                      |
 | Unrecognized issuer       | Valid proof, `400 UNTRUSTED_ISSUER`                        | `tests/proof.test.js`, `tests/api.test.js`, UI |
