@@ -1,4 +1,4 @@
-# AegisID — private age checks for online services
+# AegisID — private 18+ checks for online services
 
 A working prototype of zero-knowledge age verification. A credential holder proves
 that their date of birth is at least 18 years before a verifier-supplied reference
@@ -7,8 +7,10 @@ records an application-scoped nullifier. The request does not contain the date o
 birth, credential identifier, signature, or full issuer key. The issuer key hash is
 public verification metadata and is included in the proof signals.
 
-This is a research prototype with synthetic credentials. It is not a production
-identity system and does not process real government documents.
+This is an India-first technical pilot for online services that need an 18+ check. It
+uses synthetic credentials, not a production identity source, and does not process real
+government documents. An 18+ proof is not parental consent and does not by itself make
+a service compliant with India's data-protection framework.
 
 ## Why this prototype is useful
 
@@ -38,7 +40,11 @@ is not an independently verifiable credential or an authorization token.
 - Browser-side Groth16 proving with `snarkjs`.
 - Stateless, HMAC-signed challenge tokens with expiry and a single-use challenge id.
 - Redis-backed challenge and nullifier state when configured, with a process-local
-  fallback for development.
+  fallback for development. Production requires shared Redis for state and request
+  limits.
+- Shared per-IP request limits for sample retrieval (30/minute), challenge issuance
+  (60/minute), and proof verification (20/minute). Rate-limit keys are HMAC-derived
+  and expire after one minute.
 - Static front end plus Vercel functions for challenge, verification, health, and
   an optional demo reset.
 - Node test suite covering the circuit, challenge tokens, state store, and HTTP API.
@@ -152,8 +158,10 @@ docs/                architecture, protocol, security, deployment, benchmarks
   BN254 scalar field. It identifies the application, not a person.
 - The nullifier is unique per credential and application. Reissuing a credential
   produces a new nullifier.
-- A process-local store is lost on restart and is not shared by multiple instances.
-- There is no rate limiting, revocation, device binding, or audit logging in this
+- Process-local state is used only for local development and is lost on restart.
+- Per-address endpoint limits are basic abuse controls; distributed attacks still
+  require platform-level protection.
+- There is no credential revocation, device binding, or operator audit log in this
   build.
 
 See [docs/threat-model.md](docs/threat-model.md) for the full analysis.

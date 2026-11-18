@@ -4,8 +4,9 @@ const crypto = require("crypto");
 const { config } = require("../lib/config");
 const sampleSet = require("../config/demo-samples.json");
 const { sendJson, methodNotAllowed, queryValue } = require("../lib/http");
+const { enforceRateLimit } = require("../lib/rate-limit");
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return methodNotAllowed(res, ["GET"]);
   }
@@ -13,6 +14,23 @@ module.exports = function handler(req, res) {
     return sendJson(res, 503, {
       error: "SERVER_NOT_CONFIGURED",
       message: "The verifier is not configured for demo samples."
+    });
+  }
+
+  try {
+    const allowed = await enforceRateLimit(req, res, {
+      scope: "demo-sample",
+      limit: 30,
+      windowSeconds: 60
+    });
+    if (!allowed) {
+      return;
+    }
+  } catch (error) {
+    console.error("rate limiter unavailable:", error.message);
+    return sendJson(res, 503, {
+      error: "STORE_UNAVAILABLE",
+      message: "The verifier state store is unavailable."
     });
   }
 

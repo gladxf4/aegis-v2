@@ -2,13 +2,15 @@
 
 ## Objective
 
-AegisID demonstrates how an online service can check one age rule without receiving a
-person’s date of birth or credential identifier. The holder keeps a signed credential
-in their browser, proves the rule locally, and sends the verifier a proof bound to a
-short-lived challenge.
+AegisID is an India-first technical pilot for online services that need an 18+ access
+check. The holder keeps a signed credential in their browser, proves the rule locally,
+and sends the verifier a proof bound to a short-lived challenge, without sending their
+date of birth or credential identifier.
 
 The current rule is fixed at 18 years. This repository is an engineering prototype,
-not an identity provider or a production age-assurance service.
+not an identity provider, legal-compliance product, or production age-assurance service.
+An 18+ result does not establish that a relying service has met parental-consent or
+other obligations under India's data-protection framework.
 
 ## Who it is for
 
@@ -27,6 +29,9 @@ not an identity provider or a production age-assurance service.
   signals, and challenge token.
 - The verifier pins one issuer key hash, checks the challenge context, and prevents
   challenge replay and repeated credential use within one application.
+- Demo-sample retrieval, challenge issuance, and proof verification have per-IP request
+  limits. In production, shared Redis is required so rate limits and replay state span
+  serverless instances.
 - A local acceptance bench covers valid, invalid, replay, and tampering cases.
 - The Vercel build serves static assets and deploys the API as Node functions.
 
@@ -52,8 +57,10 @@ issuer/verifier product:
   pre-signed sample can be used once; the public pool is only a finite demo resource.
 - **Verifier response.** The receipt is an unsigned summary for display and copy. It
   cannot be independently authenticated by another service.
-- **Operations.** There is no rate limiting, alerting, operator audit trail, or
-  retention policy for persistent nullifiers.
+- **Operations.** The API has basic per-IP request limits and requires Redis in
+  production. It still lacks alerting, an operator audit trail, and a retention policy
+  for persistent nullifiers. The rate-limit identifiers are HMAC-derived and expire
+  after one minute; the verifier does not store the raw address in its rate-limit keys.
 
 These gaps are product decisions as well as implementation work. A real credential
 issuer, supported age policy, and relying-party use case must be chosen before the app
@@ -73,6 +80,30 @@ can make real-world eligibility claims.
 4. **Prepare a real pilot.** Confirm the issuer, jurisdiction-specific age rule,
    proving-key ceremony, security review, abuse controls, and operational ownership.
 
+## India pilot boundary
+
+Section 2(f) of the Digital Personal Data Protection Act, 2023 defines a child as an
+individual under 18. Section 9 addresses processing children's personal data, including
+verifiable parental consent. The Government's phased commencement notification places
+sections 7 to 10 in its eighteen-month group. The Act and Rules therefore need to be
+reviewed against the selected service and the provisions in force when it launches.
+This project does not implement parental verification, consent capture, or a general
+DPDP compliance workflow. It only demonstrates a cryptographic 18+ predicate using a
+synthetic issuer.
+
+For a real India pilot, a candidate source is a DigiLocker-issued document accessed
+through an approved Requester integration. DigiLocker describes partner vetting, legal
+agreements, technical onboarding, validation, and an approved go-live process. This
+repository has no requester credentials or approval. Its custom BabyJubjub
+EdDSA-Poseidon credential is not interchangeable with a DigiLocker document; a real
+integration needs an approved data flow and a reviewed issuer adapter or compatible
+credential issuance path. See [DigiLocker partner integration](https://www.digilocker.gov.in/web/implementation-model)
+and [partner resources](https://entity.digilocker.gov.in/web/resources).
+
+Primary sources: [DPDP Act, 2023 (MeitY)](https://www.meity.gov.in/static/uploads/2024/02/Digital-Personal-Data-Protection-Act-2023.pdf),
+[commencement notification G.S.R. 843(E) (Official Gazette)](https://egazette.gov.in/WriteReadData/2025/267647.pdf),
+and [DPDP Rules, 2025 (MeitY)](https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf).
+
 ## What a real pilot needs
 
 Treat these as explicit work items before connecting a real issuer or relying party:
@@ -91,8 +122,9 @@ Treat these as explicit work items before connecting a real issuer or relying pa
    fields.
 5. **Operational state.** Configure shared Redis in every deployed environment and
    confirm replay and duplicate checks remain atomic under concurrent requests.
-6. **Abuse controls.** Add edge rate limits, request monitoring, alerting, and a
-   retention policy for challenge and nullifier data.
+6. **Abuse controls.** Keep the API's shared per-IP limits, then add platform edge
+   protection, request monitoring, alerting, and a retention policy for challenge and
+   nullifier data.
 7. **Verifier integration.** Define how a relying service receives the result, how it
    handles retries, and whether it needs a signed, independently verifiable response.
 8. **User review.** Test with keyboard and screen-reader users, measure proof time and

@@ -85,12 +85,13 @@ Vercel and under the local Express server.
 
 ### Shared server modules
 
-| Module             | Responsibility                                        |
-| ------------------ | ----------------------------------------------------- |
-| `lib/config.js`    | Environment parsing, app id derivation, readiness     |
-| `lib/challenge.js` | Token encoding, HMAC, payload validation, expiry      |
-| `lib/store.js`     | Memory or Redis challenge and nullifier state         |
-| `lib/http.js`      | JSON responses, method errors, body and query parsing |
+| Module              | Responsibility                                        |
+| ------------------- | ----------------------------------------------------- |
+| `lib/config.js`     | Environment parsing, app id derivation, readiness     |
+| `lib/challenge.js`  | Token encoding, HMAC, payload validation, expiry      |
+| `lib/store.js`      | Memory or Redis challenge and nullifier state         |
+| `lib/rate-limit.js` | HMAC-addressed limits for challenge and verify routes |
+| `lib/http.js`       | JSON responses, method errors, body and query parsing |
 
 ### Local server
 
@@ -146,9 +147,9 @@ Challenges are stateless: the token carries its own payload and signature. The o
 server-side state needed for replay protection is a record that a challenge id was
 consumed. Nullifiers are the other stateful part.
 
-With Redis configured, both are shared and survive function instances. Without
-Redis, both live in process memory, which is suitable only for local development or
-a single long-lived instance.
+With Redis configured, replay, nullifier, and rate-limit state is shared across
+function instances. Production health is not ready without it. Local development uses
+process memory.
 
 ## Deployment shape
 

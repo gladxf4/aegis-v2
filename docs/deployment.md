@@ -89,15 +89,26 @@ KV_REST_API_URL
 KV_REST_API_TOKEN
 ```
 
-Both the URL and the token must be present. If only one is set, the verifier fails
-closed with `STORE_UNAVAILABLE` instead of silently using memory.
+Both the URL and the token must be present. Production health is not ready without
+them. If only one is set, requests fail closed with `STORE_UNAVAILABLE`; the verifier
+does not silently fall back to per-instance memory.
 
 Redis keys:
 
 ```text
 aegis:challenge:<challenge id>
 aegis:nullifiers:<app id>
+aegis:rate:<HMAC of app id, route, and client address>
 ```
+
+Sample retrieval is limited to 30 requests per minute per address, challenge issuance
+to 60 per minute, and proof verification to 20 per minute. The rate-limit key is derived
+with the challenge secret and has a one-minute expiry. Redis is required in production
+so the limits apply across function instances. Add Vercel Firewall rules for volumetric
+or distributed abuse; application limits do not replace edge protection. Vercel overwrites
+`X-Forwarded-For` with the client address; on another host, configure a trusted proxy to
+replace inbound forwarding headers before they reach the app, or clients may spoof the
+address used by this limiter. See [Vercel request headers](https://vercel.com/docs/headers/request-headers).
 
 ## Demo mode
 
@@ -156,14 +167,17 @@ Expected production shape:
   "ok": true,
   "store": "redis",
   "store_ready": true,
+  "shared_store_configured": true,
+  "shared_store_required": true,
+  "rate_limit_scope": "shared",
   "challenge_configured": true,
   "issuer_configured": true,
   "demo_mode": false
 }
 ```
 
-If `ok` is false, inspect `challenge_configured`, `issuer_configured`, `store`, and
-`store_ready`.
+If `ok` is false, inspect `challenge_configured`, `issuer_configured`,
+`shared_store_configured`, `store`, and `store_ready`.
 
 ## Integrate from another service
 
@@ -232,6 +246,7 @@ environment variables or Redis data. A rollback to a deployment with a different
 - [ ] trusted issuer hash confirmed
 - [ ] artifacts present and cached correctly
 - [ ] custom domain and TLS configured
-- [ ] edge rate limiting considered
+- [ ] rate limits report `rate_limit_scope: shared`
+- [ ] Vercel Firewall rules considered for distributed abuse
 - [ ] logs and error rates monitored
 - [ ] deployment does not claim production identity assurance

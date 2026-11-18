@@ -18,6 +18,7 @@ government issuer, a production identity database, or a mobile operating system.
 | Challenge HMAC secret | Environment variable                      |
 | Challenge state       | Memory or Redis                           |
 | Nullifier registry    | Memory or Redis                           |
+| Rate-limit counters   | Memory or Redis; one-minute windows       |
 
 ## Adversaries
 
@@ -46,19 +47,19 @@ For a verifier that pins the correct issuer hash and keeps its secret:
 
 ## Attacks and controls
 
-| Attack                     | Control                                        | Residual risk                          |
-| -------------------------- | ---------------------------------------------- | -------------------------------------- |
-| Forge a signature          | EdDSA-Poseidon verification in-circuit         | A break in BabyJubjub or Poseidon      |
-| Swap in another issuer key | `issuer_key_hash` constraint and server pin    | Operator pins the wrong hash           |
-| Claim an underage DOB      | Age constraint in-circuit                      | Date encoding edge cases               |
-| Replay a proof             | Nonce binding, token expiry, challenge consume | Token stolen before use                |
-| Reuse a credential         | Nullifier registry                             | Memory store loses state on restart    |
-| Modify public signals      | Groth16 verification and server comparisons    | None known in the protocol             |
-| Tamper with the token      | HMAC-SHA256, constant-time compare             | Secret disclosure                      |
-| Cross-app replay           | App id in token and nullifier                  | Same app name reused by mistake        |
-| Forge proofs               | Groth16 soundness                              | Toxic waste from the development setup |
-| Read PII from requests     | Browser-only private inputs                    | Browser or extension compromise        |
-| Denial of service          | Short challenge TTL, proof-size limit          | No rate limiting                       |
+| Attack                     | Control                                                                              | Residual risk                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| Forge a signature          | EdDSA-Poseidon verification in-circuit                                               | A break in BabyJubjub or Poseidon                                      |
+| Swap in another issuer key | `issuer_key_hash` constraint and server pin                                          | Operator pins the wrong hash                                           |
+| Claim an underage DOB      | Age constraint in-circuit                                                            | Date encoding edge cases                                               |
+| Replay a proof             | Nonce binding, token expiry, challenge consume                                       | Token stolen before use                                                |
+| Reuse a credential         | Nullifier registry                                                                   | Memory store loses state on restart                                    |
+| Modify public signals      | Groth16 verification and server comparisons                                          | None known in the protocol                                             |
+| Tamper with the token      | HMAC-SHA256, constant-time compare                                                   | Secret disclosure                                                      |
+| Cross-app replay           | App id in token and nullifier                                                        | Same app name reused by mistake                                        |
+| Forge proofs               | Groth16 soundness                                                                    | Toxic waste from the development setup                                 |
+| Read PII from requests     | Browser-only private inputs                                                          | Browser or extension compromise                                        |
+| Repeated endpoint use      | 30 samples, 60 challenges, and 20 proofs/minute per address; HMAC-derived Redis keys | Distributed sources and edge-level floods still need platform controls |
 
 ## Trusted setup
 
@@ -93,9 +94,15 @@ does not invalidate nullifiers.
 ## State store
 
 The memory store is per process. On Vercel, separate function instances do not share
-it, so replay and duplicate detection can fail across instances. Use Redis for any
-deployment that can scale beyond one instance. If Redis is partially configured, the
-server fails closed with `STORE_UNAVAILABLE`.
+it, so replay and duplicate detection can fail across instances. Production refuses
+readiness without shared Redis. If Redis is partially configured or unavailable,
+challenge and proof requests fail closed with `STORE_UNAVAILABLE`.
+
+Rate-limit keys are HMACs over the app id, endpoint, and client address. Redis stores
+only the derived key and an expiring counter, not the address itself. The window is one
+minute. Local development uses process memory, so its limit is not shared across
+instances. The limits slow repeated requests from one address; they do not stop
+distributed denial of service or replace Vercel Firewall controls.
 
 Redis is trusted for availability and integrity. A compromised Redis can drop
 nullifiers, replay challenges, or mount a denial of service. Protect the token and use
@@ -132,7 +139,7 @@ over and review those headers.
 - Revocation and credential status.
 - Device binding and attestation.
 - Sybil resistance across applications.
-- Rate limiting and abuse detection.
+- Distributed abuse detection and edge-level rate limiting.
 - Audit logging and retention policy.
 - Legal compliance and data-protection review.
 - Mobile native clients.
@@ -145,7 +152,8 @@ over and review those headers.
 - Configure Redis and verify `store_ready` in health checks.
 - Disable `AEGIS_DEMO`.
 - Pin `APP_ID` and `ISSUER_KEY_HASH` per environment.
-- Add rate limiting and request-size limits at the edge.
+- Configure Vercel Firewall controls for distributed abuse and monitor the built-in
+  endpoint limits.
 - Monitor `STORE_UNAVAILABLE`, `PROOF_INVALID`, and `DUPLICATE_NULLIFIER` rates.
 - Publish the circuit, verification key, and build instructions.
 - Add a revocation design before claiming real-world eligibility.

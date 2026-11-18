@@ -23,6 +23,10 @@ module.exports = async function handler(req, res) {
     challenge_ttl_seconds: config.challengeTtlSeconds,
     store: store.backend,
     store_ready: storeReady,
+    shared_store_configured: config.sharedStoreConfigured,
+    shared_store_required: process.env.NODE_ENV === "production",
+    rate_limits: { challenge_per_minute: 60, verify_per_minute: 20, sample_per_minute: 30 },
+    rate_limit_scope: store.backend === "redis" ? "shared" : "instance-local",
     demo_mode: config.demoMode
   });
 };

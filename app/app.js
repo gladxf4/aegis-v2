@@ -314,8 +314,11 @@ async function getChallenge() {
   const response = await fetch("/api/challenge", { headers: { Accept: "application/json" } });
   const body = await readJson(response);
   if (!response.ok) {
+    const retryAfter = body && Number(body.retry_after_seconds);
     throw new Error(
-      body && body.message ? body.message : `Challenge request failed (${response.status}).`
+      body && body.message
+        ? `${body.message}${retryAfter > 0 ? ` Retry in ${retryAfter}s.` : ""}`
+        : `Challenge request failed (${response.status}).`
     );
   }
   return body;
@@ -643,6 +646,7 @@ async function submit() {
       state.submitted = true;
       const code = body && body.error ? body.error : `HTTP_${response.status}`;
       const message = body && body.message ? body.message : "Proof was rejected.";
+      const retryAfter = body && Number(body.retry_after_seconds);
       const nextStep = {
         CHALLENGE_USED: "Refresh the request and check eligibility again.",
         CHALLENGE_EXPIRED: "Refresh the request to get a new expiry time.",
@@ -661,7 +665,8 @@ async function submit() {
         "rejected",
         "Not accepted",
         "Proof not accepted",
-        duplicateSampleMessage || `${message}${nextStep ? ` ${nextStep}` : ""}`
+        duplicateSampleMessage ||
+          `${message}${retryAfter > 0 ? ` Try again in ${retryAfter}s.` : ""}${nextStep ? ` ${nextStep}` : ""}`
       );
       addLog(`Verifier rejected proof: ${code}`);
     }

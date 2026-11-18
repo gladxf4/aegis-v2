@@ -6,6 +6,7 @@ const { config, FIELD_MODULUS } = require("../lib/config");
 const { verifyChallenge } = require("../lib/challenge");
 const { getStore } = require("../lib/store");
 const { sendJson, methodNotAllowed, getBody } = require("../lib/http");
+const { enforceRateLimit } = require("../lib/rate-limit");
 
 function fail(res, status, code, message, extra = {}) {
   return sendJson(res, status, { verified: false, error: code, message, ...extra });
@@ -17,6 +18,20 @@ module.exports = async function handler(req, res) {
   }
   if (!config.ready) {
     return fail(res, 503, "SERVER_NOT_CONFIGURED", "The verifier is not configured.");
+  }
+
+  try {
+    const allowed = await enforceRateLimit(req, res, {
+      scope: "verify",
+      limit: 20,
+      windowSeconds: 60
+    });
+    if (!allowed) {
+      return;
+    }
+  } catch (error) {
+    console.error("rate limiter unavailable:", error.message);
+    return fail(res, 503, "STORE_UNAVAILABLE", "The verifier state store is unavailable.");
   }
 
   let body;

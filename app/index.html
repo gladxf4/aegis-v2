@@ -350,8 +350,12 @@ prove    EdDSA_verify(
                 not per person. A reissued credential gets a new nullifier.
               </li>
               <li>
-                <strong>State.</strong> Challenges are stateless HMAC tokens. Nullifiers live in
-                Redis when configured, otherwise in process memory.
+                <strong>State.</strong> Challenges are HMAC tokens. Production requires shared Redis
+                for replay and duplicate protection; local development uses process memory.
+              </li>
+              <li>
+                <strong>India pilot boundary.</strong> This proves an 18+ predicate only. It does
+                not verify a parent, collect parental consent, or certify DPDP compliance.
               </li>
             </ul>
           </section>
