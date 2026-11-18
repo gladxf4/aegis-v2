@@ -18,6 +18,56 @@ issuer does not inspect identity documents and does not perform real KYC. It doe
 replace a regulated entity's CDD or V-CIP, connect to CKYCR or DigiLocker, or access
 CIBIL data. A KYC/age proof is not parental consent or a DPDP compliance certificate.
 
+## Chosen vertical
+
+Digital identity and KYC for Indian fintech and other online onboarding flows. The
+problem is repeated collection of identity documents when a service needs only a
+specific eligibility claim. AegisID demonstrates how a holder might disclose an
+issuer-backed claim such as “KYC complete” or “18+” without sending the underlying
+date of birth or credential identifier to each relying service.
+
+## Approach and logic
+
+An authorized issuer would verify the person and sign a structured, expiring
+credential. The holder's browser proves that the signature is from a trusted issuer,
+the KYC flag is complete, the credential is current, and the age rule passes. The
+verifier checks the proof against a short-lived challenge, records a
+service-scoped nullifier to prevent replay, and returns the claim result. In this
+repository, the issuer and credentials are synthetic, so the demo proves the flow's
+logic rather than anyone's real identity.
+
+## How the solution works
+
+1. The holder selects a synthetic sample or imports a compatible signed credential.
+   Imported data stays in the browser.
+2. The verifier issues an HMAC-signed challenge containing a nonce, application id,
+   reference date, and trusted issuer hash.
+3. The browser uses the Circom circuit and Groth16 proving key to generate a proof
+   locally. The source date of birth, credential UID, KYC flag, credential expiry,
+   signature, and issuer key are private inputs.
+4. The verifier checks the token, issuer trust, public signals, and proof. Shared
+   Redis records challenge use and the app-scoped nullifier. The response reports
+   “KYC complete” and “18+” without those private inputs.
+
+The website and verifier API run on Vercel. An optional EVM registry stores only the
+public issuer-key hash; it does not store a holder's data. The current deployment
+uses the synthetic issuer hash from repository configuration until the Sepolia
+registry is deployed and configured.
+
+## Assumptions
+
+- A real deployment has an authorized KYC issuer that performs the required identity
+  checks, signs accurate claims, and manages expiry and revocation.
+- Each relying service explicitly accepts that issuer and the credential format. A
+  valid cryptographic proof alone does not establish that an underlying KYC process
+  was legally sufficient.
+- This prototype supports its own BabyJubjub EdDSA-Poseidon credential format. It
+  does not parse or verify Aadhaar, CKYCR, DigiLocker, or CIBIL data.
+- The demo trusts its generated issuer key and public synthetic fixtures. They must
+  never be treated as real identity evidence.
+- The one-use nullifier rule is scoped to an application. Reuse across services is
+  possible; repeated checks with the same credential at one service are blocked.
+
 ## Why this prototype is useful
 
 Repeated onboarding can ask a person to upload the same identity files and reveal more
@@ -125,7 +175,7 @@ browser and are never uploaded. One action generates the proof locally and sends
 the verifier; the result includes a small verification receipt and a local session log.
 
 The **Test bench** and **Protocol** views support judges and integrators without making
-the primary experience feel like a developer console. The test bench has eight
+the primary experience feel like a developer console. The test bench has ten
 acceptance cases. All case runs are disabled on the public production deployment
 because the fixtures share one-time nullifiers; run them locally with `AEGIS_DEMO=1`.
 

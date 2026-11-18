@@ -10,7 +10,7 @@ AegisID depends on the following projects. Versions are pinned in
 | [circomlibjs](https://github.com/iden3/circomlibjs) | 0.1.7   | GPL-3.0 | Issuer signing and fixtures      |
 | [circom](https://github.com/iden3/circom)           | 2.2.x   | GPL-3.0 | Circuit compiler (external tool) |
 | [express](https://github.com/expressjs/express)     | 5.2.1   | MIT     | Local development server         |
-| [ajv](https://github.com/ajv-validator/ajv)         | 8.17.1  | MIT     | Benchmark schema validation      |
+| [ajv](https://github.com/ajv-validator/ajv)         | 8.20.0  | MIT     | Benchmark schema validation      |
 
 `app/vendor/snarkjs.min.js` is the unmodified browser bundle from the snarkjs
 package. Its licence text is shipped alongside it as

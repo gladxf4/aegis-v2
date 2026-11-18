@@ -13,7 +13,7 @@
 | circomlib   | 2.0.5   | GPL-3.0 | Circuit templates                      |
 | circomlibjs | 0.1.7   | GPL-3.0 | Issuer key generation and fixtures     |
 | express     | 5.2.1   | MIT     | Local development server               |
-| ajv         | 8.17.1  | MIT     | Benchmark record validation            |
+| ajv         | 8.20.0  | MIT     | Benchmark record validation            |
 | circom      | 2.2.x   | GPL-3.0 | Circuit compiler, installed separately |
 
 ## Generated and vendored files
