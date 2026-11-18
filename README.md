@@ -107,9 +107,9 @@ browser and are never uploaded. One action generates the proof locally and sends
 the verifier; the result includes a small verification receipt and a local session log.
 
 The **Test bench** and **Protocol** views support judges and integrators without making
-the primary experience feel like a developer console. The test bench runs eight
-acceptance cases against the live API. Running all cases requires `AEGIS_DEMO=1`
-because the cases share the same demo credential.
+the primary experience feel like a developer console. The test bench has eight
+acceptance cases. All case runs are disabled on the public production deployment
+because the fixtures share one-time nullifiers; run them locally with `AEGIS_DEMO=1`.
 
 The app uses no client-side framework or build step. Vercel applies a restrictive
 Content Security Policy that permits the local WebAssembly prover, while disallowing

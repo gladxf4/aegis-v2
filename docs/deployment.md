@@ -112,10 +112,10 @@ When demo mode is off:
 
 - `/api/reset` returns `404`;
 - the reset button is hidden;
-- the Test bench disables **Run all** because the cases share the adult credential.
+- every Test bench case is disabled because the fixtures share one-time nullifiers.
 
-Individual cases still run, but the adult credential can only produce one recorded
-nullifier per app until the store is cleared by an operator.
+The local test server enables demo mode by default. Use it to run the acceptance cases
+repeatedly against a disposable in-memory store.
 
 ## Build behavior
 

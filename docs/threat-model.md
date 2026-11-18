@@ -119,8 +119,10 @@ shown to the user. The server still verifies the proof, but it cannot protect th
 credential on the client.
 
 The page has no user-generated HTML and no third-party scripts beyond the bundled
-snarkjs file. It does not set a Content-Security-Policy header yet; adding one needs
-to allow WebAssembly compilation.
+snarkjs file. The Vercel deployment sets a Content-Security-Policy that restricts
+scripts and connections to the same origin and allows WebAssembly compilation for the
+local prover. This header is configured in `vercel.json`; a different host must carry
+over and review those headers.
 
 ## Out of scope
 

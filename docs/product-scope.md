@@ -32,22 +32,55 @@ not an identity provider or a production age-assurance service.
 These behaviours use synthetic credentials and a development Groth16 setup. The
 copyable receipt is an unsigned summary, not a credential or bearer token.
 
+## Gaps in the current app
+
+The public deployment demonstrates the proof flow. It is not yet a holder wallet or an
+issuer/verifier product:
+
+- **Credential source.** The app ships a public synthetic fixture and accepts a
+  project-specific JSON shape. There is no trusted issuance service or standard
+  credential exchange.
+- **Credential lifecycle.** Credentials have no expiry or revocation check. Imported
+  credentials live in page memory only; there is no wallet backup, recovery, or
+  persistent storage.
+- **Age policy.** The rule is fixed to 18 and uses `YYYYMMDD - 180000` in the circuit.
+  That is a simplified calendar comparison and does not define a jurisdiction's
+  treatment of leap-day birthdays.
+- **Repeat-use policy.** A nullifier is consumed once per credential and application.
+  The verifier has no configurable purpose or time window for repeat checks. The
+  public fixture therefore cannot be used again after its first successful check.
+- **Verifier response.** The receipt is an unsigned summary for display and copy. It
+  cannot be independently authenticated by another service.
+- **Operations.** There is no rate limiting, alerting, operator audit trail, or
+  retention policy for persistent nullifiers.
+
+These gaps are product decisions as well as implementation work. A real credential
+issuer, supported age policy, and relying-party use case must be chosen before the app
+can make real-world eligibility claims.
+
 ## What a real pilot needs
 
 Treat these as explicit work items before connecting a real issuer or relying party:
 
 1. **Issuer integration.** Agree on a credential schema, key custody, issuance
-   ceremony, expiry, and key rotation. Replace the public demo signing key.
-2. **Circuit review.** Independently review date encoding and edge cases, credential
+   ceremony, expiry, revocation, and key rotation. Replace the public demo signing key
+   and the project-specific credential JSON exchange.
+2. **Policy and repeat use.** Define the age rule for the target jurisdiction, including
+   calendar boundaries, and decide whether a relying party can verify the same holder
+   again for another session or purpose.
+3. **Circuit review.** Independently review date encoding and edge cases, credential
    binding, nullifier scope, and the trusted setup. Publish build inputs and ceremony
    evidence.
-3. **Operational state.** Configure shared Redis in every deployed environment and
+4. **Holder wallet.** Define import, local storage, backup, recovery, and deletion
+   behavior for credentials. Review browser storage risks before persisting private
+   fields.
+5. **Operational state.** Configure shared Redis in every deployed environment and
    confirm replay and duplicate checks remain atomic under concurrent requests.
-4. **Abuse controls.** Add edge rate limits, request monitoring, alerting, and a
+6. **Abuse controls.** Add edge rate limits, request monitoring, alerting, and a
    retention policy for challenge and nullifier data.
-5. **Verifier integration.** Define how a relying service receives the result, how it
+7. **Verifier integration.** Define how a relying service receives the result, how it
    handles retries, and whether it needs a signed, independently verifiable response.
-6. **User review.** Test with keyboard and screen-reader users, measure proof time and
+8. **User review.** Test with keyboard and screen-reader users, measure proof time and
    memory on supported devices, and explain exactly what each verifier learns.
 
 ## Production bar
