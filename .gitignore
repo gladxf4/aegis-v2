@@ -1,8 +1,19 @@
 node_modules/
+.vercel/
+.env
+.env.*
+!.env.example
 *.log
 .DS_Store
-circuits/build/pot*.ptau
-circuits/build/*.zkey
-circuits/build/trivial.r1cs
-circuits/build/trivial_js/trivial.wasm
-wallet/test_sim/sim_test
+
+# Generated circuit build outputs. The verification key is needed at runtime
+# and is committed; everything else is rebuilt with npm run build:circuits.
+circuits/build/*
+!circuits/build/age_proof_verification_key.json
+
+# The demo issuer private key is local only.
+issuer/keypair.json
+
+# Benchmark output is machine-specific.
+bench/results/*.json
+bench/export/

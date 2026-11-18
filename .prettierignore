@@ -1,0 +1,8 @@
+node_modules/
+.git/
+.vercel/
+app/artifacts/
+app/vendor/
+bench/export/
+bench/results/
+circuits/build/

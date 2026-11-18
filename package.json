@@ -1,27 +1,39 @@
 {
   "name": "aegisid",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node verifier/server.js",
-    "dev": "node verifier/server.js",
-    "build:circuits": "./circuits/scripts/build_aegis_age.sh",
-    "test:circuits": "node circuits/scripts/test_aegis_age.js",
-    "test": "node circuits/scripts/test_aegis_age.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Browser-side zero-knowledge age checks for online services",
+  "license": "MIT",
   "type": "commonjs",
-  "devDependencies": {
-    "circomlib": "^2.0.5",
-    "snarkjs": "^0.7.6"
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "start": "node server/dev.js",
+    "dev": "node server/dev.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "issuer:init": "node issuer/init.js",
+    "build:circuits": "./circuits/scripts/build.sh",
+    "prepare:web": "node scripts/prepare-web.js",
+    "test": "node --test --test-force-exit tests/*.test.js",
+    "test:circuits": "node --test --test-force-exit tests/proof.test.js",
+    "bench": "node bench/harness.js",
+    "bench:export": "node bench/export.js"
   },
   "dependencies": {
-    "circomlibjs": "^0.1.7",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "qrcode": "^1.5.4"
+    "snarkjs": "0.7.6"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "circomlib": "2.0.5",
+    "circomlibjs": "0.1.7",
+    "eslint": "^10.15.0",
+    "express": "5.2.1",
+    "prettier": "^3.10.1"
+  },
+  "overrides": {
+    "ws": "^8.21.0"
   }
 }

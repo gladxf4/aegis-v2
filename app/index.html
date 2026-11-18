@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AegisID — private age checks for online services</title>
+    <meta
+      name="description"
+      content="Prove an age threshold in your browser without sending a birth date or credential identifier to the verifier."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href="/" aria-label="AegisID home">
+          <span class="brand-mark" aria-hidden="true">A</span>
+          <span class="brand-name">AegisID</span>
+          <span class="brand-tag">prototype</span>
+        </a>
+        <nav class="tabs" aria-label="Sections">
+          <button class="tab is-active" type="button" data-view="verify">Verify</button>
+          <button class="tab" type="button" data-view="tests">Test bench</button>
+          <button class="tab" type="button" data-view="protocol">Protocol</button>
+        </nav>
+        <a class="header-link" href="/api/health" target="_blank" rel="noreferrer">Status</a>
+      </div>
+    </header>
+
+    <main class="shell">
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+      <section id="view-verify" class="view is-active">
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">Age verification</p>
+            <h1>Prove you’re old enough. Keep the rest to yourself.</h1>
+            <p class="lede">
+              One private proof replaces an identity check. Your browser proves the age rule and
+              sends only the proof and its verification context.
+            </p>
+          </div>
+          <div class="heading-actions">
+            <button id="newChallenge" class="button button-secondary" type="button">
+              New challenge
+            </button>
+          </div>
+        </div>
+
+        <div class="session" aria-label="Current challenge">
+          <div class="session-item">
+            <span class="label">Verifier</span>
+            <span id="verifierName" class="value">-</span>
+          </div>
+          <div class="session-item">
+            <span class="label">Application id</span>
+            <span id="appId" class="value mono truncate">-</span>
+          </div>
+          <div class="session-item">
+            <span class="label">Reference date</span>
+            <span id="refDate" class="value mono">-</span>
+          </div>
+          <div class="session-item">
+            <span class="label">Nonce</span>
+            <span id="nonce" class="value mono truncate">-</span>
+          </div>
+          <div class="session-item">
+            <span class="label">Expires in</span>
+            <span id="expires" class="value mono">-</span>
+          </div>
+        </div>
+
+        <div class="layout">
+          <div class="column">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Your credential</h2>
+                <span class="muted small">processed on this device</span>
+              </div>
+
+              <div class="credential-import">
+                <div class="import-copy">
+                  <strong>Have a signed credential?</strong>
+                  <span>Choose a credential JSON file. It stays in this browser.</span>
+                </div>
+                <input
+                  id="credentialFile"
+                  class="file-input"
+                  type="file"
+                  accept=".json,application/json"
+                />
+                <label
+                  class="button button-secondary button-small import-button"
+                  for="credentialFile"
+                  >Choose file</label
+                >
+              </div>
+              <p
+                id="credentialMessage"
+                class="import-message"
+                role="status"
+                aria-live="polite"
+                hidden
+              ></p>
+
+              <div
+                id="credentialList"
+                class="credential-list"
+                role="radiogroup"
+                aria-label="Credential"
+              ></div>
+
+              <dl id="credentialDetails" class="details"></dl>
+
+              <div class="actions">
+                <button id="proveButton" class="button button-primary" type="button">
+                  Verify eligibility
+                </button>
+              </div>
+              <p class="fineprint">
+                A Groth16 proof is created and checked in one step. The request omits your date of
+                birth, credential ID, signature, and full issuer key. The issuer hash is public.
+                Demo data is synthetic.
+              </p>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>What the verifier sees</h2>
+              </div>
+              <table class="disclosure">
+                <thead>
+                  <tr>
+                    <th>Shared to verify</th>
+                    <th>Kept on this device</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Groth16 proof</td>
+                    <td>Date of birth</td>
+                  </tr>
+                  <tr>
+                    <td>Nullifier, reference date, application id, nonce, issuer key hash</td>
+                    <td>Credential UID</td>
+                  </tr>
+                  <tr>
+                    <td>Signed challenge token</td>
+                    <td>EdDSA signature and issuer public key</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+
+          <div class="column">
+            <section class="panel panel-result" aria-live="polite">
+              <div class="panel-head">
+                <h2>Verification receipt</h2>
+                <div class="result-actions">
+                  <button id="copyReceipt" class="text-button" type="button" hidden>
+                    Copy receipt
+                  </button>
+                  <span id="statusBadge" class="badge">Idle</span>
+                </div>
+              </div>
+              <div id="result" class="result">
+                <p class="result-title">Ready when you are</p>
+                <p class="result-text">
+                  Choose a credential and verify eligibility. The proof is generated here.
+                </p>
+              </div>
+              <div id="proofMeta" class="meta-grid" hidden></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Session log</h2>
+                <button id="clearLog" class="text-button" type="button">Clear</button>
+              </div>
+              <ol id="log" class="log"></ol>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-tests" class="view" hidden>
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">Test bench</p>
+            <h1>Run the acceptance cases against the live API.</h1>
+            <p class="lede">
+              Each case requests a fresh challenge and generates a real proof in this tab. The
+              server only verifies proofs; it never runs the prover.
+            </p>
+          </div>
+          <div class="heading-actions">
+            <button id="runAll" class="button button-primary" type="button">Run all</button>
+            <button id="resetRegistry" class="button button-secondary" type="button">
+              Reset registry
+            </button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="test-summary">
+            <span id="testSummary">No cases run.</span>
+            <span id="storeMode" class="muted small"></span>
+          </div>
+          <div class="table-wrap">
+            <table class="tests">
+              <thead>
+                <tr>
+                  <th>Case</th>
+                  <th>Expected</th>
+                  <th>Result</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="testRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="fineprint">
+          Reset is available only when the server runs with <code>AEGIS_DEMO=1</code>. A production
+          deployment should remove that flag and use a persistent store.
+        </p>
+      </section>
+
+      <section id="view-protocol" class="view" hidden>
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">Protocol</p>
+            <h1>What the circuit proves</h1>
+            <p class="lede">
+              The relation is small enough to check by reading the circuit. It is not a claim about
+              real government credentials.
+            </p>
+          </div>
+        </div>
+
+        <div class="protocol-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Relation</h2>
+            </div>
+            <pre class="code"><code>public   ref_date, app_id, nonce, issuer_key_hash
+private  dob, credential_uid,
+         issuer_ax, issuer_ay,
+         signature_r8x, signature_r8y, signature_s
+
+prove    EdDSA_verify(
+           issuer_key,
+           signature,
+           Poseidon(dob, credential_uid)
+         ) = 1
+         issuer_key_hash = Poseidon(issuer_ax, issuer_ay)
+         dob &lt;= ref_date - 180000
+         nullifier = Poseidon(credential_uid, app_id)</code></pre>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Boundaries</h2>
+            </div>
+            <ul class="plain-list">
+              <li>
+                <strong>Issuer.</strong> The demo issuer key is generated by
+                <code>issuer/init.js</code>. The verifier pins its Poseidon hash in
+                <code>config/issuer.json</code>.
+              </li>
+              <li>
+                <strong>Signature.</strong> The circuit verifies EdDSA-Poseidon on BabyJubjub.
+                RSA-2048 verification is not part of this build.
+              </li>
+              <li>
+                <strong>Setup.</strong> The Groth16 key came from a single-party powers-of-tau
+                ceremony. It is not a production ceremony.
+              </li>
+              <li>
+                <strong>Nullifier.</strong> The identifier is unique per credential and application,
+                not per person. A reissued credential gets a new nullifier.
+              </li>
+              <li>
+                <strong>State.</strong> Challenges are stateless HMAC tokens. Nullifiers live in
+                Redis when configured, otherwise in process memory.
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Request path</h2>
+          </div>
+          <ol class="steps">
+            <li>
+              <code>GET /api/challenge</code> returns a signed token with a nonce, application id,
+              and reference date.
+            </li>
+            <li>
+              The browser builds the witness from a local credential and calls
+              <code>snarkjs.groth16.fullProve</code>.
+            </li>
+            <li>
+              <code>POST /api/verify</code> checks the token, public signals, trusted issuer hash,
+              and Groth16 proof, then records the nullifier.
+            </li>
+          </ol>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <span>Research prototype. Not for production identity checks.</span>
+        <span id="healthLine" class="mono small">checking status</span>
+      </div>
+    </footer>
+
+    <script src="/vendor/snarkjs.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

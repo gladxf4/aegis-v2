@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aegisid.local/bench/schema.json",
+  "title": "AegisID benchmark run",
+  "description": "One proof-generation run recorded by bench/harness.js.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "timestamp",
+    "device",
+    "circuit",
+    "run_type",
+    "witness_gen_ms",
+    "proving_ms",
+    "verification_ms",
+    "peak_memory_mb",
+    "proof_size_bytes",
+    "proof_json_bytes",
+    "public_signals_count"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "UUID for this run."
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+    },
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "soc", "ram_gb", "os", "os_version", "build_type", "thermal_state"],
+      "properties": {
+        "model": { "type": "string" },
+        "soc": { "type": "string" },
+        "ram_gb": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "os": {
+          "type": "string",
+          "enum": ["android", "ios", "linux", "macos", "windows"]
+        },
+        "os_version": { "type": "string" },
+        "build_type": {
+          "type": "string",
+          "enum": ["debug", "release"]
+        },
+        "thermal_state": {
+          "type": "string",
+          "enum": ["nominal", "fair", "serious", "critical", "unknown"]
+        }
+      }
+    },
+    "circuit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "constraint_count",
+        "proving_key_size_bytes",
+        "proof_system",
+        "curve",
+        "prover_backend"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "constraint_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "proving_key_size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "proof_system": {
+          "type": "string",
+          "enum": ["groth16", "plonk", "halo2", "sp1", "risc_zero"]
+        },
+        "curve": { "type": "string" },
+        "prover_backend": { "type": "string" }
+      }
+    },
+    "run_type": {
+      "type": "string",
+      "enum": ["cold", "warm"]
+    },
+    "witness_gen_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "proving_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "verification_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "peak_memory_mb": {
+      "type": "number",
+      "minimum": 0
+    },
+    "proof_size_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Raw Groth16 proof size on the BN254 curve."
+    },
+    "proof_json_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Size of the proof as JSON, which is what the browser sends."
+    },
+    "public_signals_count": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}
