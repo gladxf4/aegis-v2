@@ -50,3 +50,9 @@ test("the published proving key matches the committed verification key", async (
   const derived = await snarkjs.zKey.exportVerificationKey(zkey);
   assert.deepEqual(JSON.parse(JSON.stringify(derived)), verificationKey);
 });
+
+test("the problem map separates demonstrated work from future scope", () => {
+  assert.equal(html.match(/>Shown in this demo</g)?.length, 2);
+  assert.equal(html.match(/>Needs a regulated issuer</g)?.length, 2);
+  assert.equal(html.match(/>Future claim, not built</g)?.length, 2);
+});

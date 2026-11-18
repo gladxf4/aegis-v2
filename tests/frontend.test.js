@@ -122,3 +122,38 @@ test("test-bench scenarios are unique and judged against their expected outcome"
   );
   assert.deepEqual(tamperNullifier(["1", "2"]), ["2", "2"]);
 });
+
+test("control state follows the verification lifecycle", async () => {
+  const controls = await load("control-state");
+  const session = { challenge: { expires_at: "2026-11-18T12:01:00.000Z" } };
+  const now = Date.parse("2026-11-18T12:00:00.000Z");
+  const idle = { phase: "idle", testRunning: false, selected: {}, session, submitted: false };
+
+  assert.equal(controls.canCheckEligibility(idle), true);
+  assert.equal(controls.currentJourneyStep(idle), 2);
+  assert.equal(controls.proveButtonLabel(idle), "Check eligibility");
+  assert.equal(controls.proveHint(idle), "");
+  assert.equal(controls.hasUsableChallenge(idle, now), true);
+
+  const proving = { ...idle, phase: "proving" };
+  assert.equal(controls.isBusy(proving), true);
+  assert.equal(controls.canCheckEligibility(proving), false);
+  assert.match(controls.proveButtonLabel(proving), /Creating proof/);
+  assert.match(controls.proveButtonLabel({ ...idle, phase: "verifying" }), /Checking/);
+  assert.equal(controls.proveButtonLabel({ ...idle, proof: {} }), "Try verification again");
+
+  const finished = { ...idle, submitted: true };
+  assert.equal(controls.currentJourneyStep(finished), 3);
+  assert.match(controls.proveHint(finished), /has a result/);
+  assert.equal(controls.currentJourneyStep({ ...idle, selected: null }), 1);
+  assert.match(controls.proveHint({ ...idle, selected: null }), /Choose or import/);
+});
+
+test("a challenge must be unspent and have time left for proving", async () => {
+  const { hasUsableChallenge } = await load("control-state");
+  const session = { challenge: { expires_at: "2026-11-18T12:01:00.000Z" } };
+  const now = Date.parse("2026-11-18T12:00:30.000Z");
+  assert.equal(hasUsableChallenge({ session }, now), false);
+  assert.equal(hasUsableChallenge({ session, challengeSpent: true }, now - 30_000), false);
+  assert.equal(hasUsableChallenge({ session: null }, now), false);
+});

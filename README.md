@@ -26,6 +26,21 @@ specific eligibility claim. AegisID demonstrates how a holder might disclose an
 issuer-backed claim such as “KYC complete” or “18+” without sending the underlying
 date of birth or credential identifier to each relying service.
 
+## Problems it targets
+
+Every repeated check asks people to expose the same data again, while each service that
+stores it becomes another place it can leak. AegisID changes the question from "send your
+documents" to "prove the answer".
+
+| Problem                                    | AegisID approach                                             | Status                   |
+| ------------------------------------------ | ------------------------------------------------------------ | ------------------------ |
+| Re-uploading Aadhaar, voter ID, or licence | Reuse one signed credential and send a proof                 | Shown in this demo       |
+| Identity data exposed in breaches          | Verifiers keep a challenge record and app-specific pseudonym | Shown in this demo       |
+| Repeat vKYC queues and offline KYC visits  | Accepting services could reuse one completed KYC result      | Needs a regulated issuer |
+| Repeated OTP and form verification         | A device-generated proof could answer eligibility questions  | Needs a regulated issuer |
+| Repeated credit checks after rejections    | A bureau could sign a score-band claim for lenders to verify | Future claim, not built  |
+| Marksheets and other certificates          | Issuers could sign claims without sharing the full document  | Future claim, not built  |
+
 ## Approach and logic
 
 An authorized issuer would verify the person and sign a structured, expiring

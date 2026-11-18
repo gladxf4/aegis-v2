@@ -1,4 +1,5 @@
 import { fetchChallenge, fetchFixtures, resetNullifiers, submitProof } from "./api.mjs";
+import { renderControls } from "./controls.mjs";
 import { buildProofInput } from "./credential.mjs";
 import { CircuitRejection, generateProof } from "./prover.mjs";
 import {
@@ -9,7 +10,6 @@ import {
 } from "./scenarios.mjs";
 import { state } from "./state.mjs";
 import { addLog, byId, createElement, setNotice } from "./ui.mjs";
-import { renderControls } from "./verify-view.mjs";
 
 const RESULT_CLASSES = {
   pass: "result-pass",

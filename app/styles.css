@@ -1286,3 +1286,47 @@ summary:focus-visible {
 .result-title:focus {
   outline: none;
 }
+
+.problem-panel {
+  margin-top: 18px;
+}
+.problem-map th[scope="row"] {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.problem-map th:first-child,
+.problem-map td:first-child {
+  width: 32%;
+}
+.scope-status {
+  font-weight: 700;
+  white-space: nowrap;
+}
+@media (max-width: 620px) {
+  .problem-map,
+  .problem-map tbody,
+  .problem-map tr,
+  .problem-map th[scope="row"],
+  .problem-map td {
+    display: block;
+    width: auto;
+  }
+  .problem-map thead {
+    display: none;
+  }
+  .problem-map tr {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .problem-map tr:last-child {
+    border-bottom: 0;
+  }
+  .problem-map th[scope="row"],
+  .problem-map td {
+    padding: 3px 0;
+    border: 0;
+  }
+}

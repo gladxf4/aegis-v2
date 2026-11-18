@@ -304,6 +304,77 @@
             </section>
           </div>
         </div>
+
+        <section class="panel problem-panel" aria-labelledby="problemHeading">
+          <div class="panel-head">
+            <h2 id="problemHeading">The problems this targets</h2>
+            <span class="muted small">prove the answer, keep the data</span>
+          </div>
+          <div class="problem-scroll">
+            <table class="disclosure problem-map">
+              <caption class="sr-only">
+                Identity and verification problems, how AegisID addresses each, and current status
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Problem</th>
+                  <th scope="col">AegisID approach</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Re-uploading Aadhaar, voter ID, or licence copies</th>
+                  <td>
+                    One signed credential is reused. The service receives a proof instead of the
+                    document.
+                  </td>
+                  <td><span class="scope-status">Shown in this demo</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Identity data exposed in breaches</th>
+                  <td>
+                    Verifiers keep a one-time challenge record and an app-specific pseudonym, not
+                    identity documents.
+                  </td>
+                  <td><span class="scope-status">Shown in this demo</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Repeat vKYC queues and offline KYC visits</th>
+                  <td>
+                    After one accepted KYC, a service that trusts the issuer could avoid asking for
+                    the same check again.
+                  </td>
+                  <td><span class="scope-status">Needs a regulated issuer</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Repeated OTP and form verification</th>
+                  <td>
+                    A device-generated proof could answer eligibility questions without sharing a
+                    phone number.
+                  </td>
+                  <td><span class="scope-status">Needs a regulated issuer</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Repeated credit checks after card rejections</th>
+                  <td>
+                    A bureau could sign a score-band claim that lenders verify without another full
+                    report request.
+                  </td>
+                  <td><span class="scope-status">Future claim, not built</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Marksheets and other certificates</th>
+                  <td>
+                    Their issuers could sign claims such as “passed” without sharing the full
+                    document.
+                  </td>
+                  <td><span class="scope-status">Future claim, not built</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
       <section

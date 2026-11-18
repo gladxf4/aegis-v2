@@ -18,7 +18,7 @@
     "build:circuits": "./circuits/scripts/build.sh",
     "prepare:web": "node scripts/prepare-web.js",
     "test": "node --test --test-force-exit tests/*.test.js",
-    "test:coverage": "node --test --test-force-exit --experimental-test-coverage --test-coverage-include=\"api/**\" --test-coverage-include=\"lib/**\" --test-coverage-include=\"app/js/*.mjs\" --test-coverage-exclude=\"app/js/{main,navigation,prover,test-bench,ui,verify-view}.mjs\" --test-coverage-lines=90 --test-coverage-branches=80 --test-coverage-functions=90 tests/*.test.js",
+    "test:coverage": "node --test --test-force-exit --experimental-test-coverage --test-coverage-include=\"api/**\" --test-coverage-include=\"lib/**\" --test-coverage-include=\"app/js/*.mjs\" --test-coverage-exclude=\"app/js/{challenge-session,controls,credential-picker,main,navigation,proof-flow,prover,result-panel,test-bench,ui,verify-view}.mjs\" --test-coverage-lines=90 --test-coverage-branches=80 --test-coverage-functions=90 tests/*.test.js",
     "test:circuits": "node --test --test-force-exit tests/proof.test.js",
     "bench": "node bench/harness.js",
     "bench:export": "node bench/export.js"

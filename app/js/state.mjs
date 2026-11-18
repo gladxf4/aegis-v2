@@ -16,7 +16,3 @@ export const state = {
   health: null,
   testRunning: false
 };
-
-export function isBusy() {
-  return state.phase !== "idle" || state.testRunning;
-}

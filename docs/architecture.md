@@ -108,10 +108,12 @@ Vercel and under the local Express server.
 
 ### Browser modules
 
-`app/js/` holds native ES modules with no build step. `verify-view.mjs` runs the holder
-flow, `test-bench.mjs` runs the acceptance cases, and `prover-worker.js` generates proofs
-off the main thread. `credential.mjs`, `outcome.mjs`, `scenarios.mjs`, and `format.mjs`
-contain no DOM code and are unit tested in Node.
+`app/js/` holds native ES modules with no build step. `verify-view.mjs` connects the
+holder flow from `challenge-session.mjs`, `credential-picker.mjs`, `proof-flow.mjs`, and
+`result-panel.mjs`. `test-bench.mjs` runs the acceptance cases, and `prover-worker.js`
+generates proofs off the main thread. `control-state.mjs`, `credential.mjs`,
+`outcome.mjs`, `scenarios.mjs`, and `format.mjs` contain no DOM code and are unit tested
+in Node.
 
 ### Local server
 
