@@ -210,3 +210,47 @@ test("endpoints enforce allowed HTTP methods and report 405", async () => {
   assert.equal(notFound.status, 404);
   assert.equal(notFound.body.error, "NOT_FOUND");
 });
+
+test("non-object JSON body to verify returns 400 MALFORMED_BODY", async () => {
+  const arrayBody = await request("POST", "/api/verify", [1, 2, 3]);
+  assert.equal(arrayBody.status, 400);
+  assert.equal(arrayBody.body.error, "MALFORMED_BODY");
+});
+
+test("oversized verification payload returns 413", async () => {
+  const hugePayload = {
+    token: "x.y",
+    proof: { padding: "a".repeat(260 * 1024) },
+    publicSignals: ["1", "20261118", "1", "1", "1"]
+  };
+  const res = await request("POST", "/api/verify", hugePayload);
+  assert.equal(res.status, 413);
+  assert.ok(res.body.error === "PROOF_TOO_LARGE" || res.body.error === "BODY_TOO_LARGE");
+});
+
+test("corrupted groth16 proof fails with PROOF_INVALID", async () => {
+  const issued = await challenge();
+  const validProof = await proofFor(credential("adult"), issued);
+  const tamperedProof = {
+    ...validProof.proof,
+    pi_a: ["12345", "67890", "1"]
+  };
+  const response = await request("POST", "/api/verify", {
+    token: issued.token,
+    proof: tamperedProof,
+    publicSignals: validProof.publicSignals
+  });
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "PROOF_INVALID");
+});
+
+test("health endpoint supports HEAD method", async () => {
+  const headRes = await fetch(`${base}/api/health`, {
+    method: "HEAD",
+    headers: { Connection: "close" }
+  });
+  assert.equal(headRes.status, 200);
+  assert.equal(headRes.headers.get("content-type"), "application/json; charset=utf-8");
+  const text = await headRes.text();
+  assert.equal(text, "");
+});

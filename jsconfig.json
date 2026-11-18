@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "checkJs": false,
+    "strict": false
+  },
+  "include": [
+    "api/**/*",
+    "bench/**/*",
+    "issuer/**/*",
+    "lib/**/*",
+    "scripts/**/*",
+    "server/**/*",
+    "tests/**/*",
+    "app/**/*"
+  ],
+  "exclude": ["node_modules", "app/artifacts", "app/vendor", "circuits/build"]
+}

@@ -75,3 +75,50 @@ test("a malformed token is rejected", () => {
 test("utcDate formats a timestamp as YYYYMMDD", () => {
   assert.equal(utcDate(Date.UTC(2026, 0, 2, 23, 59, 59)), "20260102");
 });
+
+test("an invalid issuer key hash is rejected at creation", () => {
+  assert.throws(
+    () => createChallenge({ secret, appId: "42", issuerKeyHash: "not-a-number", now }),
+    /Trusted issuer key hash is invalid/
+  );
+  assert.throws(
+    () => createChallenge({ secret, appId: "42", issuerKeyHash: "", now }),
+    /Trusted issuer key hash is invalid/
+  );
+});
+
+test("verifyChallenge rejects when secret is missing", () => {
+  const { token } = createChallenge({ secret, appId: "42", now });
+  const result = verifyChallenge(token, { secret: "", appId: "42", now });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "SERVER_NOT_CONFIGURED");
+});
+
+test("verifyChallenge rejects tokens issued in the future", () => {
+  const { token } = createChallenge({ secret, appId: "42", now });
+  const result = verifyChallenge(token, { secret, appId: "42", now: now - 70_000 });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "CHALLENGE_INVALID");
+  assert.match(result.message, /future/);
+});
+
+test("verifyChallenge rejects invalid payload structures", () => {
+  const crypto = require("crypto");
+  const sign = (b) => crypto.createHmac("sha256", secret).update(b).digest("base64url");
+
+  // Non-JSON payload
+  const badJson = Buffer.from("not-json").toString("base64url");
+  const badJsonToken = `${badJson}.${sign(badJson)}`;
+  assert.equal(
+    verifyChallenge(badJsonToken, { secret, appId: "42", now }).code,
+    "CHALLENGE_INVALID"
+  );
+
+  // Invalid version
+  const badVersion = Buffer.from(JSON.stringify({ v: 2 })).toString("base64url");
+  const badVersionToken = `${badVersion}.${sign(badVersion)}`;
+  assert.equal(
+    verifyChallenge(badVersionToken, { secret, appId: "42", now }).code,
+    "CHALLENGE_INVALID"
+  );
+});

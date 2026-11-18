@@ -52,7 +52,7 @@ module.exports = async function handler(req, res) {
     return fail(res, 400, "MALFORMED_BODY", "Request body is not valid JSON.");
   }
 
-  if (!body || typeof body !== "object") {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
     return fail(res, 400, "MALFORMED_BODY", "Request body must be a JSON object.");
   }
 

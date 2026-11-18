@@ -13,8 +13,8 @@ const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry")
  * @param {import("http").ServerResponse} res
  */
 module.exports = async function handler(req, res) {
-  if (req.method !== "GET") {
-    return methodNotAllowed(res, ["GET"]);
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return methodNotAllowed(res, ["GET", "HEAD"]);
   }
 
   const store = getStore();

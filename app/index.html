@@ -9,6 +9,7 @@
       content="Prove an age threshold in your browser without sending a birth date or credential identifier to the verifier."
     />
     <meta name="theme-color" content="#f4f5f1" />
+    <meta name="color-scheme" content="light" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -17,7 +18,7 @@
     <header class="site-header">
       <div class="shell header-inner">
         <a class="brand" href="/" aria-label="AegisID home">
-          <img class="brand-mark" src="/favicon.svg" alt="" />
+          <img class="brand-mark" src="/favicon.svg" alt="" aria-hidden="true" />
           <span class="brand-name">AegisID</span>
           <span class="brand-tag">prototype</span>
         </a>
@@ -27,6 +28,7 @@
             class="tab is-active"
             type="button"
             role="tab"
+            tabindex="0"
             aria-selected="true"
             aria-controls="view-verify"
             data-view="verify"
@@ -38,6 +40,7 @@
             class="tab"
             type="button"
             role="tab"
+            tabindex="-1"
             aria-selected="false"
             aria-controls="view-tests"
             data-view="tests"
@@ -49,6 +52,7 @@
             class="tab"
             type="button"
             role="tab"
+            tabindex="-1"
             aria-selected="false"
             aria-controls="view-protocol"
             data-view="protocol"
@@ -157,7 +161,7 @@
               </div>
 
               <div class="demo-note">
-                <img class="wallet-art" src="/assets/wallet-card.png" alt="" />
+                <img class="wallet-art" src="/assets/wallet-card.png" alt="" aria-hidden="true" />
                 <div class="demo-copy">
                   <span class="demo-label">Sample data</span>
                   <span
@@ -178,6 +182,7 @@
                   class="file-input"
                   type="file"
                   accept=".json,application/json"
+                  aria-label="Import credential JSON file from device"
                 />
                 <label
                   class="button button-secondary button-small import-button"
@@ -220,7 +225,14 @@
               <div class="panel-head">
                 <h2>What the verifier sees</h2>
               </div>
-              <table class="disclosure">
+              <table
+                class="disclosure"
+                aria-label="Privacy disclosure: data shared versus kept local"
+              >
+                <caption class="sr-only">
+                  Privacy disclosure summary comparing data fields shared with the verifier versus
+                  fields retained locally on this device
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Shared to verify</th>
@@ -314,7 +326,11 @@
             <span id="storeMode" class="muted small"></span>
           </div>
           <div class="table-wrap">
-            <table class="tests">
+            <table class="tests" aria-label="Verifier test cases">
+              <caption class="sr-only">
+                Cryptographic and verifier test bench scenarios covering positive and negative proof
+                cases
+              </caption>
               <thead>
                 <tr>
                   <th scope="col">Case</th>

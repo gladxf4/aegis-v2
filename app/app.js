@@ -449,12 +449,19 @@ function renderCredentials() {
   for (const credential of state.credentials) {
     const label = document.createElement("label");
     label.className = "credential";
+    const inputId = `credential-${credential.id}`;
+    label.htmlFor = inputId;
 
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "credential";
+    input.id = inputId;
     input.value = credential.id;
-    input.checked = state.selected && state.selected.id === credential.id;
+    input.checked = Boolean(state.selected && state.selected.id === credential.id);
+    input.setAttribute(
+      "aria-label",
+      `${credential.label || "Credential"}: ${credential.description || "Signed credential"}`
+    );
     input.addEventListener("change", () => selectCredential(credential));
 
     const body = document.createElement("span");
@@ -696,7 +703,7 @@ async function submit() {
       addLog(`Verifier rejected proof: ${code}`);
     }
   } catch (error) {
-    console.error(error);
+    console.error("verification request error:", error.message || error);
     setNotice("Could not reach the verifier. Check the network and try again.", true);
     addLog("Verification request failed");
   } finally {
@@ -828,7 +835,8 @@ function renderTests() {
     const row = document.createElement("tr");
     row.dataset.scenario = scenario.id;
 
-    const nameCell = document.createElement("td");
+    const nameCell = document.createElement("th");
+    nameCell.scope = "row";
     const name = document.createElement("span");
     name.className = "test-name";
     name.textContent = scenario.name;
@@ -850,8 +858,9 @@ function renderTests() {
     button.type = "button";
     button.className = "button button-secondary button-small";
     button.textContent = "Run";
+    button.setAttribute("aria-label", `Run ${scenario.name} test`);
     button.disabled = !(state.health && state.health.demo_mode);
-    button.title = button.disabled ? "Available only in demo mode" : "Run this case";
+    button.title = button.disabled ? "Available only in demo mode" : `Run ${scenario.name}`;
     button.addEventListener("click", () => runScenario(scenario));
     actionCell.append(button);
 
@@ -867,7 +876,7 @@ function updateTestSummary() {
   let pending = 0;
   for (const row of rows) {
     const cell = row.querySelector("td:nth-child(3)");
-    if (!cell || cell.dataset.status === "pass") {
+    if (cell && cell.dataset.status === "pass") {
       passed += 1;
     } else if (cell && cell.dataset.status === "fail") {
       failed += 1;
@@ -1033,7 +1042,7 @@ async function runScenario(scenario) {
       }
     }
   } catch (error) {
-    console.error(error);
+    console.error(`scenario ${scenario.id} error:`, error.message || error);
     setRowResult(scenario, "fail", error.message);
   } finally {
     state.testRunning = false;
@@ -1128,7 +1137,29 @@ function bindEvents() {
   const tabList = document.querySelector(".tabs");
   if (tabList) {
     tabList.addEventListener("keydown", (event) => {
-      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+      if (
+        event.key !== "ArrowRight" &&
+        event.key !== "ArrowLeft" &&
+        event.key !== "Home" &&
+        event.key !== "End"
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (event.key === "Home") {
+        const firstTab = el.tabs[0];
+        if (firstTab) {
+          firstTab.focus();
+          switchView(firstTab.dataset.view);
+        }
+        return;
+      }
+      if (event.key === "End") {
+        const lastTab = el.tabs[el.tabs.length - 1];
+        if (lastTab) {
+          lastTab.focus();
+          switchView(lastTab.dataset.view);
+        }
         return;
       }
       const currentIndex = el.tabs.findIndex((t) => t.classList.contains("is-active"));
@@ -1144,12 +1175,22 @@ function bindEvents() {
   }
   for (const step of el.journeySteps) {
     const action = step.querySelector(".journey-action");
-    action.addEventListener("click", () => {
-      document.getElementById(action.dataset.journeyTarget)?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
+    if (action) {
+      action.addEventListener("click", () => {
+        const targetId = action.dataset.journeyTarget;
+        const target = targetId ? document.getElementById(targetId) : null;
+        if (target) {
+          target.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+          if (target.tabIndex < 0) {
+            target.tabIndex = -1;
+          }
+          target.focus({ preventScroll: true });
+        }
       });
-    });
+    }
   }
   el.newChallenge.addEventListener("click", newChallenge);
   el.newSample.addEventListener("click", useAnotherSample);
@@ -1203,7 +1244,7 @@ async function init() {
     updateButtons();
     await newChallenge();
   } catch (error) {
-    console.error(error);
+    console.error("initialization error:", error.message || error);
     setNotice(error.message, true);
   }
 }

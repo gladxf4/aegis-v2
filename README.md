@@ -1,5 +1,11 @@
 # AegisID — reusable, privacy-preserving KYC proofs
 
+[![Validate](https://github.com/gladxf4/aegis-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/gladxf4/aegis-v2/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20.19-blue.svg)](package.json)
+[![Zero Knowledge](https://img.shields.io/badge/ZK-Groth16%20%7C%20BN254-orange.svg)](circuits/age_proof.circom)
+[![Constraints](https://img.shields.io/badge/R1CS-9%2C969%20constraints-purple.svg)](docs/benchmarks.md)
+
 AegisID explores how a holder could reuse an issuer-signed KYC credential without
 re-uploading identity documents to every service. The browser proves that a trusted
 issuer marked KYC complete, the credential is unexpired, and the holder is 18 or older.

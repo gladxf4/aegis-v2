@@ -577,7 +577,7 @@ h1 {
 }
 .credential:has(.tag-invalid)::before {
   background: #fff2e5;
-  color: #a96a31;
+  color: #7a4212;
   content: "!";
 }
 .credential-body {
@@ -600,7 +600,7 @@ h1 {
   padding: 4px 8px;
   border-radius: 99px;
   background: #e9f5ee;
-  color: #357a53;
+  color: #1b5a36;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -608,15 +608,15 @@ h1 {
 }
 .tag-invalid {
   background: #fff2e5;
-  color: #a96a31;
+  color: #7a4212;
 }
 .tag-sample {
   background: #fff2e5;
-  color: #966436;
+  color: #693e15;
 }
 .tag-imported {
   background: #eaf1ec;
-  color: #557462;
+  color: #2d4b3b;
 }
 .credential-details {
   margin-top: 10px;
@@ -715,7 +715,7 @@ h1 {
   text-decoration: underline;
 }
 .text-button:disabled {
-  color: #a1aaa4;
+  color: #596660;
   cursor: not-allowed;
 }
 .button:focus-visible,
@@ -825,7 +825,7 @@ summary:focus-visible {
 .badge.is-working {
   border-color: #f2dfbf;
   background: #fff9ec;
-  color: #9b6920;
+  color: #7a4d0f;
 }
 .badge.is-proved {
   border-color: #d8e7f2;
@@ -977,7 +977,7 @@ summary:focus-visible {
   font-weight: 700;
 }
 .result-run {
-  color: #9b6920;
+  color: #7a4d0f;
   font-weight: 700;
 }
 .result-muted {
@@ -1053,7 +1053,7 @@ summary:focus-visible {
   border: 1px solid #f2dfbf;
   border-radius: 12px;
   background: #fff9ec;
-  color: #91621e;
+  color: #6d4107;
   font-size: 12px;
 }
 .notice.is-error {
