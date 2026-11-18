@@ -65,6 +65,8 @@ registry is deployed and configured.
   does not parse or verify Aadhaar, CKYCR, DigiLocker, or CIBIL data.
 - The demo trusts its generated issuer key and public synthetic fixtures. They must
   never be treated as real identity evidence.
+- Age and expiry use the verifier's UTC date. Between midnight and 05:30 IST that date
+  is still the previous day, so a birthday or expiry takes effect at 05:30 IST.
 - The one-use nullifier rule is scoped to an application. Reuse across services is
   possible; repeated checks with the same credential at one service are blocked.
 
