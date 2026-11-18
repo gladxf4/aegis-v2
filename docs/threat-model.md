@@ -164,7 +164,7 @@ Advisory](https://github.com/advisories/GHSA-848j-6mx2-7j84).
 - Run a public powers-of-tau ceremony or use a production proving service.
 - Set a high-entropy `CHALLENGE_SECRET`.
 - Configure Redis and verify `store_ready` in health checks.
-- Disable `AEGIS_DEMO`.
+- Disable `AEGIS_DEMO`. Vercel production ignores it, so the reset route stays closed.
 - Pin `APP_ID` per environment and verify the registry address, chain id, and active
   issuer key hash.
 - Configure Vercel Firewall controls for distributed abuse and monitor the built-in

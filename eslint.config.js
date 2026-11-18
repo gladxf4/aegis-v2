@@ -1,5 +1,5 @@
 const nodeGlobals = {
-  AbortController: "readonly",
+  AbortSignal: "readonly",
   Array: "readonly",
   BigInt: "readonly",
   Boolean: "readonly",
@@ -16,6 +16,7 @@ const nodeGlobals = {
   module: "readonly",
   Number: "readonly",
   Object: "readonly",
+  performance: "readonly",
   Promise: "readonly",
   process: "readonly",
   RegExp: "readonly",
@@ -29,7 +30,6 @@ const nodeGlobals = {
 };
 
 const browserGlobals = {
-  AbortController: "readonly",
   Array: "readonly",
   BigInt: "readonly",
   Boolean: "readonly",
@@ -51,11 +51,12 @@ const browserGlobals = {
   Set: "readonly",
   setInterval: "readonly",
   clearInterval: "readonly",
-  setTimeout: "readonly",
-  clearTimeout: "readonly",
   console: "readonly",
-  snarkjs: "readonly",
-  String: "readonly"
+  self: "readonly",
+  String: "readonly",
+  URLSearchParams: "readonly",
+  window: "readonly",
+  Worker: "readonly"
 };
 
 const sourceFiles = [
@@ -70,6 +71,7 @@ const sourceFiles = [
 
 const sourceRules = {
   "array-callback-return": "error",
+  complexity: ["error", 25],
   curly: ["error", "all"],
   eqeqeq: ["error", "always"],
   "no-async-promise-executor": "error",
@@ -85,7 +87,7 @@ const sourceRules = {
   "no-sparse-arrays": "error",
   "no-throw-literal": "error",
   "no-unmodified-loop-condition": "error",
-  "no-unused-vars": ["error", { args: "none", caughtErrors: "none" }],
+  "no-unused-vars": ["error", { args: "none", caughtErrors: "none", ignoreRestSiblings: true }],
   "no-var": "error",
   "object-shorthand": ["error", "always"],
   "prefer-const": "error",
@@ -114,7 +116,12 @@ module.exports = [
     rules: sourceRules
   },
   {
-    files: ["app/app.js"],
+    files: ["app/js/**/*.mjs"],
+    languageOptions: { ecmaVersion: "latest", sourceType: "module", globals: browserGlobals },
+    rules: sourceRules
+  },
+  {
+    files: ["app/js/prover-worker.js"],
     languageOptions: { ecmaVersion: "latest", sourceType: "script", globals: browserGlobals },
     rules: sourceRules
   },

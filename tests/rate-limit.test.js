@@ -9,7 +9,10 @@ if (process.stderr?.setMaxListeners) {
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const { config } = require("../lib/config");
 const { clientAddress, enforceRateLimit } = require("../lib/rate-limit");
+
+config.trustProxyHeaders = true;
 
 function mockRes() {
   const headers = {};
@@ -101,4 +104,17 @@ test("enforceRateLimit permits requests up to limit and blocks after", async () 
   assert.equal(blockedRes.statusCode, 429);
   assert.equal(blockedRes.getHeader("retry-after"), "60");
   assert.equal(blockedRes.body.error, "RATE_LIMITED");
+});
+
+test("clientAddress ignores forwarding headers without a trusted proxy", () => {
+  config.trustProxyHeaders = false;
+  try {
+    const address = clientAddress({
+      headers: { "x-real-ip": "203.0.113.9", "x-forwarded-for": "203.0.113.10" },
+      socket: { remoteAddress: "192.0.2.1" }
+    });
+    assert.equal(address, "192.0.2.1");
+  } finally {
+    config.trustProxyHeaders = true;
+  }
 });

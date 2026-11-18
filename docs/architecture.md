@@ -94,13 +94,24 @@ Vercel and under the local Express server.
 
 ### Shared server modules
 
-| Module              | Responsibility                                        |
-| ------------------- | ----------------------------------------------------- |
-| `lib/config.js`     | Environment parsing, app id derivation, readiness     |
-| `lib/challenge.js`  | Token encoding, HMAC, payload validation, expiry      |
-| `lib/store.js`      | Memory or Redis challenge and nullifier state         |
-| `lib/rate-limit.js` | HMAC-addressed limits for challenge and verify routes |
-| `lib/http.js`       | JSON responses, method errors, body and query parsing |
+| Module                 | Responsibility                                       |
+| ---------------------- | ---------------------------------------------------- |
+| `lib/config.js`        | Environment parsing, app id derivation, readiness    |
+| `lib/challenge.js`     | Token encoding, HMAC, payload validation, expiry     |
+| `lib/endpoint.js`      | Shared method, readiness, rate-limit, and error flow |
+| `lib/proof-request.js` | Strict request parsing and canonical field checks    |
+| `lib/verification.js`  | Ordered proof verification and state recording       |
+| `lib/store/`           | Memory or Redis challenge and nullifier state        |
+| `lib/rate-limit.js`    | HMAC-addressed limits for public routes              |
+| `lib/ttl-cache.js`     | Short-lived caching for registry and health probes   |
+| `lib/http.js`          | JSON responses, API errors, body and query parsing   |
+
+### Browser modules
+
+`app/js/` holds native ES modules with no build step. `verify-view.mjs` runs the holder
+flow, `test-bench.mjs` runs the acceptance cases, and `prover-worker.js` generates proofs
+off the main thread. `credential.mjs`, `outcome.mjs`, `scenarios.mjs`, and `format.mjs`
+contain no DOM code and are unit tested in Node.
 
 ### Local server
 

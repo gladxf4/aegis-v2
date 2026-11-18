@@ -29,8 +29,8 @@ jobs:
       - name: Check project formatting
         run: npm run format:check
 
-      - name: Run proof and API checks
-        run: npm test
+      - name: Run tests with coverage thresholds
+        run: npm run test:coverage
 
       - name: Prepare Vercel static assets
         run: npm run prepare:web

@@ -207,8 +207,7 @@ Rejection responses use `200` only for success. Errors return
 | Status | Code                    | Meaning                                                |
 | ------ | ----------------------- | ------------------------------------------------------ |
 | `400`  | `MALFORMED_BODY`        | Body is not a JSON object                              |
-| `400`  | `MALFORMED_PROOF`       | Missing token, proof, public signals, or unparseable   |
-| `413`  | `PROOF_TOO_LARGE`       | Proof payload exceeds 256 KB                           |
+| `400`  | `MALFORMED_PROOF`       | Invalid proof structure or non-canonical public signal |
 | `413`  | `BODY_TOO_LARGE`        | JSON request body exceeds the server limit             |
 | `400`  | `CHALLENGE_INVALID`     | Bad signature, malformed payload, or future issue time |
 | `400`  | `CHALLENGE_EXPIRED`     | Token expired                                          |

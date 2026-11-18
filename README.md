@@ -42,11 +42,11 @@ logic rather than anyone's real identity.
    Imported data stays in the browser.
 2. The verifier issues an HMAC-signed challenge containing a nonce, application id,
    reference date, and trusted issuer hash.
-3. The browser uses the Circom circuit and Groth16 proving key to generate a proof
-   locally. The source date of birth, credential UID, KYC flag, credential expiry,
+3. A background worker uses the Circom circuit and Groth16 proving key to generate a
+   proof locally, so the page stays responsive. The source date of birth, credential UID, KYC flag, credential expiry,
    signature, and issuer key are private inputs.
-4. The verifier checks the token, issuer trust, public signals, and proof. Shared
-   Redis records challenge use and the app-scoped nullifier. The response reports
+4. The verifier parses the request strictly, then checks the token, issuer trust,
+   public signals, and proof. Shared Redis records challenge use and the app-scoped nullifier. The response reports
    “KYC complete” and “18+” without those private inputs.
 
 The website and verifier API run on Vercel. An optional EVM registry stores only the
@@ -103,9 +103,12 @@ is not an independently verifiable credential or an authorization token.
 - Shared per-IP request limits for sample retrieval (30/minute), challenge issuance
   (60/minute), and proof verification (20/minute). Rate-limit keys are HMAC-derived
   and expire after one minute.
+- Canonical public-signal parsing, so one nullifier has exactly one accepted spelling
+  and cannot be padded to evade the duplicate check.
 - Static front end plus Vercel functions for challenge, verification, health, and
-  an optional demo reset.
-- Node test suite covering the circuit, challenge tokens, state store, and HTTP API.
+  an optional demo reset, all sharing one request pipeline.
+- Node test suite covering the circuit, API, state store, browser logic, and deployment
+  configuration, with coverage thresholds enforced in CI.
 - Benchmark harness that records witness generation, proving, verification, memory,
   and proof size.
 
@@ -127,7 +130,8 @@ Useful commands:
 ```bash
 npm run format:check     # check Markdown, HTML, CSS, JSON, and JavaScript formatting
 npm run lint              # check JavaScript style and common errors
-npm test                  # circuit, token, store, and API tests
+npm test                  # circuit, API, store, browser-logic, and deployment tests
+npm run test:coverage     # the same tests with enforced coverage thresholds
 npm run bench -- --runs 3 # measure the real prover
 npm run bench:export      # write CSV and Markdown summaries
 npm run build:circuits    # rebuild circuit, keys, and browser artifacts
@@ -145,8 +149,8 @@ of synthetic one-time demo credentials.
 2. `GET /api/challenge` returns an HMAC-signed token containing a random nonce, an
    application id, a UTC reference date, an expiry, and the verifier's trusted issuer
    hash (from Sepolia when configured).
-3. The browser calls `snarkjs.groth16.fullProve` with the local WASM and proving key.
-4. `POST /api/verify` checks the token, the five public signals, the trusted issuer
+3. A web worker calls `snarkjs.groth16.fullProve` with the local WASM and proving key.
+4. `POST /api/verify` checks the request shape, the token, the five public signals, the trusted issuer
    hash, and the Groth16 proof. It then consumes the challenge id and records the
    nullifier.
 
@@ -169,10 +173,12 @@ Verification errors use a stable code in the `error` field, for example
 
 ## User experience
 
-The front end is plain HTML, CSS, and JavaScript. A holder can use a synthetic sample
+The front end is plain HTML, CSS, and native JavaScript modules. A holder can use a synthetic sample
 or import a signed credential JSON file. Imported files are parsed in memory by the
 browser and are never uploaded. One action generates the proof locally and sends it to
 the verifier; the result includes a small verification receipt and a local session log.
+An expired idle request renews itself, so nobody has to race the countdown. Results are
+announced to screen readers and receive keyboard focus when they arrive.
 
 The **Test bench** and **Protocol** views support judges and integrators without making
 the primary experience feel like a developer console. The test bench has ten
@@ -198,19 +204,31 @@ deployment checklist.
 ## Repository layout
 
 ```text
-api/                 Vercel functions
-app/                 static front end, credentials, circuit artifacts, snarkjs bundle
+api/                 thin Vercel function definitions
+app/                 static page, styles, fixtures, circuit artifacts, snarkjs bundle
+app/js/              browser modules and the proving worker
 bench/               benchmark harness, schema, exporter
 circuits/            Circom source, build script, generated circuit artifacts
-config/              trusted issuer config and server-side demo sample pool
+config/              trusted issuer, demo sample pool, shared security headers
 contracts/           EVM testnet issuer trust registry
 issuer/init.js       local issuer key and demo credential generator
-lib/                 config, challenge tokens, state store, HTTP helpers
+lib/                 request pipeline, verification, challenges, state, configuration
 scripts/             deployment asset preparation
 server/              local Express server
 tests/               Node test suite
 docs/                architecture, protocol, security, deployment, benchmarks
 ```
+
+## Quality checks
+
+| Area          | How it is checked                                                                 |
+| ------------- | --------------------------------------------------------------------------------- |
+| Code quality  | ESLint with a complexity limit, Prettier, small modules, one request pipeline     |
+| Security      | Fail-closed production config, strict parsing, CSP, replay and duplicate tests    |
+| Efficiency    | Worker proving, cached registry and health probes, prover loaded only when used   |
+| Testing       | Real Groth16 proofs in API tests, plus CI coverage thresholds                     |
+| Accessibility | Keyboard-operable controls, live status updates, focus management, reduced motion |
+| Alignment     | Reusable KYC claims without resending identity documents or birth dates           |
 
 ## Security boundaries
 

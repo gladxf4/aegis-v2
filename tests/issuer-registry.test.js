@@ -9,8 +9,10 @@ if (process.stderr?.setMaxListeners) {
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
+const { clearIssuerCache, getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
 const { config } = require("../lib/config");
+
+test.beforeEach(clearIssuerCache);
 
 test("registryMode reports config when chain registry is not configured", () => {
   const original = config.chainRegistryConfigured;
@@ -92,11 +94,23 @@ test("getTrustedIssuerHash queries EVM storage slot when configured", async () =
   const hash = await getTrustedIssuerHash();
   assert.equal(hash, "42");
 
+  // A cached value avoids repeat RPC traffic until the cache is cleared.
+  let calls = 0;
+  const countingFetch = global.fetch;
+  global.fetch = async (url, options) => {
+    calls += 1;
+    return countingFetch(url, options);
+  };
+  assert.equal(await getTrustedIssuerHash(), "42");
+  assert.equal(calls, 0);
+  clearIssuerCache();
+
   // Test wrong chain ID
   global.fetch = async (url, options) => {
     return { ok: true, json: async () => ({ jsonrpc: "2.0", id: 1, result: "0x1" }) }; // chain ID 1
   };
   await assert.rejects(() => getTrustedIssuerHash(), /connected to the wrong chain/);
+  clearIssuerCache();
 
   // Test zero hash
   const zeroHashHex = `0x${"0".repeat(64)}`;

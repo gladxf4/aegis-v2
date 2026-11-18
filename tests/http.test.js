@@ -9,7 +9,7 @@ if (process.stderr?.setMaxListeners) {
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { sendJson, methodNotAllowed, getBody, queryValue, requestUrl } = require("../lib/http");
+const { sendJson, methodNotAllowed, getBody, queryValue } = require("../lib/http");
 
 function mockRes() {
   const headers = {};
@@ -68,13 +68,4 @@ test("queryValue extracts values from req.query and req.url searchParams", () =>
   assert.equal(queryValue({ query: { test: ["first", "second"] } }, "test"), "first");
   assert.equal(queryValue({ url: "/api?foo=bar" }, "foo"), "bar");
   assert.equal(queryValue({ url: "/api" }, "missing"), null);
-});
-
-test("requestUrl safely parses host and url", () => {
-  const url1 = requestUrl({ url: "/api/test", headers: { host: "example.com" } });
-  assert.equal(url1.origin, "http://example.com");
-  assert.equal(url1.pathname, "/api/test");
-
-  const url2 = requestUrl({ url: "invalid://url", headers: {} });
-  assert.ok(url2 instanceof URL);
 });

@@ -176,6 +176,61 @@ test("malformed verification requests fail closed", async () => {
   assert.equal(method.status, 405);
 });
 
+test("a zero-padded nullifier cannot bypass the duplicate check", async () => {
+  await request("POST", "/api/reset");
+  const item = credential("adult");
+  const firstChallenge = await challenge();
+  const firstProof = await proofFor(item, firstChallenge);
+  const accepted = await request("POST", "/api/verify", {
+    token: firstChallenge.token,
+    proof: firstProof.proof,
+    publicSignals: firstProof.publicSignals
+  });
+  assert.equal(accepted.status, 200);
+
+  const issued = await challenge();
+  const proof = await proofFor(item, issued);
+  const [nullifier, ...rest] = proof.publicSignals;
+  const response = await request("POST", "/api/verify", {
+    token: issued.token,
+    proof: proof.proof,
+    publicSignals: [`0${nullifier}`, ...rest]
+  });
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "MALFORMED_PROOF");
+  assert.equal(response.body.verified, false);
+});
+
+test("a rejected proof does not consume its challenge", async () => {
+  await request("POST", "/api/reset");
+  const issued = await challenge();
+  const proof = await proofFor(credential("adult"), issued);
+  const tampered = {
+    token: issued.token,
+    proof: proof.proof,
+    publicSignals: [
+      (BigInt(proof.publicSignals[0]) + 1n).toString(),
+      ...proof.publicSignals.slice(1)
+    ]
+  };
+  assert.equal((await request("POST", "/api/verify", tampered)).body.error, "PROOF_INVALID");
+
+  const genuine = await request("POST", "/api/verify", {
+    token: issued.token,
+    proof: proof.proof,
+    publicSignals: proof.publicSignals
+  });
+  assert.equal(genuine.status, 200);
+});
+
+test("responses carry the shared security headers", async () => {
+  const response = await fetch(`${base}/`, { headers: { Connection: "close" } });
+  await response.arrayBuffer();
+  assert.match(response.headers.get("content-security-policy"), /style-src 'self';/);
+  assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
+  assert.equal(response.headers.get("x-powered-by"), null);
+});
+
 test("a proof with reference date mismatch is rejected", async () => {
   const issued = await challenge();
   const proof = await proofFor(credential("adult"), issued);

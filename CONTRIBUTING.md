@@ -27,7 +27,7 @@ Run these commands from the repository root:
 npm ci
 npm run format:check
 npm run lint
-npm test
+npm run test:coverage
 npm run prepare:web
 ```
 

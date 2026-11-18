@@ -9,7 +9,10 @@ if (process.stderr?.setMaxListeners) {
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const { config } = require("../lib/config");
 const handler = require("../api/demo-sample");
+
+config.trustProxyHeaders = true;
 
 function mockReq(method = "GET", query = {}) {
   const url = new URL("http://localhost/api/demo-sample");
