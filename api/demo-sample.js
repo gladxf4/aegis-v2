@@ -6,6 +6,13 @@ const sampleSet = require("../config/demo-samples.json");
 const { sendJson, methodNotAllowed, queryValue } = require("../lib/http");
 const { enforceRateLimit } = require("../lib/rate-limit");
 
+/**
+ * Synthetic demo sample credential endpoint.
+ * Returns a signed synthetic credential from the pre-generated pool for demonstration.
+ *
+ * @param {import("http").IncomingMessage} req
+ * @param {import("http").ServerResponse} res
+ */
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return methodNotAllowed(res, ["GET"]);

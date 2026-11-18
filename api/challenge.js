@@ -7,6 +7,14 @@ const { sendJson, methodNotAllowed } = require("../lib/http");
 const { enforceRateLimit } = require("../lib/rate-limit");
 const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
 
+/**
+ * Challenge token issuance handler.
+ * Generates an HMAC-signed challenge token containing a unique single-use challenge ID,
+ * a random 128-bit decimal nonce, reference date, expiry timestamp, and verifier metadata.
+ *
+ * @param {import("http").IncomingMessage} req
+ * @param {import("http").ServerResponse} res
+ */
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return methodNotAllowed(res, ["GET"]);
@@ -46,7 +54,17 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const challenge = createChallenge({ issuerKeyHash });
+  let challenge;
+  try {
+    challenge = createChallenge({ issuerKeyHash });
+  } catch (error) {
+    console.error("challenge creation failed:", error.message);
+    return sendJson(res, 500, {
+      error: "INTERNAL_ERROR",
+      message: "Failed to generate verifier challenge."
+    });
+  }
+
   const store = getStore();
 
   return sendJson(res, 200, {

@@ -36,6 +36,8 @@ const el = {
   copyReceipt: document.getElementById("copyReceipt"),
   result: document.getElementById("result"),
   resultMark: document.getElementById("resultMark"),
+  resultTitle: document.getElementById("result")?.querySelector(".result-title"),
+  resultText: document.getElementById("result")?.querySelector(".result-text"),
   proofMeta: document.getElementById("proofMeta"),
   log: document.getElementById("log"),
   clearLog: document.getElementById("clearLog"),
@@ -202,18 +204,19 @@ function setResult(kind, badge, title, text, meta = []) {
   el.resultMark.hidden = !mark;
   if (mark) {
     el.resultMark.src = mark;
+    el.resultMark.alt = kind === "verified" ? "Verification passed" : "Verification rejected";
+  } else {
+    el.resultMark.alt = "";
   }
   el.statusBadge.className = `badge${kind ? ` is-${kind}` : ""}`;
   el.statusBadge.textContent = badge;
-  el.result.innerHTML = "";
 
-  const titleNode = document.createElement("p");
-  titleNode.className = "result-title";
-  titleNode.textContent = title;
-  const textNode = document.createElement("p");
-  textNode.className = "result-text";
-  textNode.textContent = text;
-  el.result.append(el.resultMark, titleNode, textNode);
+  if (el.resultTitle) {
+    el.resultTitle.textContent = title;
+  }
+  if (el.resultText) {
+    el.resultText.textContent = text;
+  }
 
   el.proofMeta.innerHTML = "";
   if (meta.length === 0) {
@@ -1059,7 +1062,10 @@ async function runAll() {
 
 function switchView(name) {
   for (const tab of el.tabs) {
-    tab.classList.toggle("is-active", tab.dataset.view === name);
+    const active = tab.dataset.view === name;
+    tab.classList.toggle("is-active", active);
+    tab.setAttribute("aria-selected", active ? "true" : "false");
+    tab.tabIndex = active ? 0 : -1;
   }
   for (const view of el.views) {
     const active = view.id === `view-${name}`;
@@ -1118,6 +1124,23 @@ async function loadCredentials() {
 function bindEvents() {
   for (const tab of el.tabs) {
     tab.addEventListener("click", () => switchView(tab.dataset.view));
+  }
+  const tabList = document.querySelector(".tabs");
+  if (tabList) {
+    tabList.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+        return;
+      }
+      const currentIndex = el.tabs.findIndex((t) => t.classList.contains("is-active"));
+      if (currentIndex === -1) {
+        return;
+      }
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      const nextIndex = (currentIndex + direction + el.tabs.length) % el.tabs.length;
+      const nextTab = el.tabs[nextIndex];
+      nextTab.focus();
+      switchView(nextTab.dataset.view);
+    });
   }
   for (const step of el.journeySteps) {
     const action = step.querySelector(".journey-action");

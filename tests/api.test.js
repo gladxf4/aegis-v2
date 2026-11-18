@@ -13,6 +13,9 @@ let base;
 
 test.before(async () => {
   server = createApp().listen(0, "127.0.0.1");
+  server.on("connection", (socket) => {
+    socket.setMaxListeners(30);
+  });
   await new Promise((resolve) => {
     server.once("listening", resolve);
   });
@@ -28,7 +31,10 @@ test.after(async () => {
 async function request(method, path, body) {
   const response = await fetch(`${base}${path}`, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers: {
+      Connection: "close",
+      ...(body ? { "Content-Type": "application/json" } : {})
+    },
     body: body ? JSON.stringify(body) : undefined
   });
   const text = await response.text();
@@ -145,9 +151,18 @@ test("malformed verification requests fail closed", async () => {
   });
   assert.equal(shortSignals.status, 400);
 
+  const issued = await challenge();
+  const invalidFieldSignal = await request("POST", "/api/verify", {
+    token: issued.token,
+    proof: {},
+    publicSignals: ["not-a-number", "20261118", "1", "1", "1"]
+  });
+  assert.equal(invalidFieldSignal.status, 400);
+  assert.equal(invalidFieldSignal.body.error, "MALFORMED_PROOF");
+
   const badJson = await fetch(`${base}/api/verify`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Connection: "close" },
     body: "{"
   });
   assert.equal(badJson.status, 400);
@@ -157,8 +172,41 @@ test("malformed verification requests fail closed", async () => {
   assert.equal(method.status, 405);
 });
 
+test("a proof with reference date mismatch is rejected", async () => {
+  const issued = await challenge();
+  const proof = await proofFor(credential("adult"), issued);
+
+  const tamperedSignals = [...proof.publicSignals];
+  tamperedSignals[1] = "20250101"; // change refDate
+
+  const response = await request("POST", "/api/verify", {
+    token: issued.token,
+    proof: proof.proof,
+    publicSignals: tamperedSignals
+  });
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "REF_DATE_MISMATCH");
+});
+
 test("reset clears the nullifier registry in demo mode", async () => {
   const response = await request("POST", "/api/reset");
   assert.equal(response.status, 200);
   assert.equal(response.body.reset, true);
+
+  const getMethod = await request("GET", "/api/reset");
+  assert.equal(getMethod.status, 405);
+});
+
+test("endpoints enforce allowed HTTP methods and report 405", async () => {
+  const challengePost = await request("POST", "/api/challenge", {});
+  assert.equal(challengePost.status, 405);
+  assert.equal(challengePost.body.error, "METHOD_NOT_ALLOWED");
+
+  const healthPost = await request("POST", "/api/health", {});
+  assert.equal(healthPost.status, 405);
+  assert.equal(healthPost.body.error, "METHOD_NOT_ALLOWED");
+
+  const notFound = await request("GET", "/api/nonexistent-endpoint");
+  assert.equal(notFound.status, 404);
+  assert.equal(notFound.body.error, "NOT_FOUND");
 });

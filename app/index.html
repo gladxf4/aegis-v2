@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <a href="#main" class="skip-link">Skip to main content</a>
     <header class="site-header">
       <div class="shell header-inner">
         <a class="brand" href="/" aria-label="AegisID home">
@@ -20,19 +21,55 @@
           <span class="brand-name">AegisID</span>
           <span class="brand-tag">prototype</span>
         </a>
-        <nav class="tabs" aria-label="Sections">
-          <button class="tab is-active" type="button" data-view="verify">Verify</button>
-          <button class="tab" type="button" data-view="tests">Test bench</button>
-          <button class="tab" type="button" data-view="protocol">Protocol</button>
+        <nav class="tabs" role="tablist" aria-label="Sections">
+          <button
+            id="tab-verify"
+            class="tab is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="view-verify"
+            data-view="verify"
+          >
+            Verify
+          </button>
+          <button
+            id="tab-tests"
+            class="tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="view-tests"
+            data-view="tests"
+          >
+            Test bench
+          </button>
+          <button
+            id="tab-protocol"
+            class="tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="view-protocol"
+            data-view="protocol"
+          >
+            Protocol
+          </button>
         </nav>
         <a class="header-link" href="/api/health" target="_blank" rel="noreferrer">Status</a>
       </div>
     </header>
 
-    <main class="shell">
+    <main id="main" class="shell">
       <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
 
-      <section id="view-verify" class="view is-active">
+      <section
+        id="view-verify"
+        class="view is-active"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-verify"
+      >
         <div class="view-heading">
           <div>
             <p class="eyebrow">Reusable KYC proofs</p>
@@ -186,8 +223,8 @@
               <table class="disclosure">
                 <thead>
                   <tr>
-                    <th>Shared to verify</th>
-                    <th>Kept on this device</th>
+                    <th scope="col">Shared to verify</th>
+                    <th scope="col">Kept on this device</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -246,7 +283,14 @@
         </div>
       </section>
 
-      <section id="view-tests" class="view" hidden>
+      <section
+        id="view-tests"
+        class="view"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-tests"
+        hidden
+      >
         <div class="view-heading">
           <div>
             <p class="eyebrow">Test bench</p>
@@ -273,10 +317,10 @@
             <table class="tests">
               <thead>
                 <tr>
-                  <th>Case</th>
-                  <th>Expected</th>
-                  <th>Result</th>
-                  <th></th>
+                  <th scope="col">Case</th>
+                  <th scope="col">Expected</th>
+                  <th scope="col">Result</th>
+                  <th scope="col"><span class="sr-only">Action</span></th>
                 </tr>
               </thead>
               <tbody id="testRows"></tbody>
@@ -297,7 +341,14 @@
         </details>
       </section>
 
-      <section id="view-protocol" class="view" hidden>
+      <section
+        id="view-protocol"
+        class="view"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-protocol"
+        hidden
+      >
         <div class="view-heading">
           <div>
             <p class="eyebrow">Protocol</p>

@@ -9,10 +9,20 @@ const { sendJson, methodNotAllowed, getBody } = require("../lib/http");
 const { enforceRateLimit } = require("../lib/rate-limit");
 const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
 
+const MAX_PROOF_PAYLOAD_BYTES = 256 * 1024;
+
 function fail(res, status, code, message, extra = {}) {
   return sendJson(res, status, { verified: false, error: code, message, ...extra });
 }
 
+/**
+ * Proof verification handler.
+ * Verifies single-use challenge token, scalar field signals, trusted issuer key hash,
+ * Groth16 cryptographic proof, and enforces replay + duplicate nullifier prevention.
+ *
+ * @param {import("http").IncomingMessage} req
+ * @param {import("http").ServerResponse} res
+ */
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return methodNotAllowed(res, ["POST"]);
@@ -47,10 +57,22 @@ module.exports = async function handler(req, res) {
   }
 
   const { token, proof, publicSignals } = body;
-  if (!token || !proof || !Array.isArray(publicSignals) || publicSignals.length !== 5) {
-    return fail(res, 400, "MALFORMED_PROOF", "Expected token, proof, and five public signals.");
+  if (
+    typeof token !== "string" ||
+    !proof ||
+    typeof proof !== "object" ||
+    Array.isArray(proof) ||
+    !Array.isArray(publicSignals) ||
+    publicSignals.length !== 5
+  ) {
+    return fail(
+      res,
+      400,
+      "MALFORMED_PROOF",
+      "Expected token string, proof object, and five public signals."
+    );
   }
-  if (Buffer.byteLength(JSON.stringify({ proof, publicSignals })) > 256 * 1024) {
+  if (Buffer.byteLength(JSON.stringify({ proof, publicSignals })) > MAX_PROOF_PAYLOAD_BYTES) {
     return fail(res, 413, "PROOF_TOO_LARGE", "Proof payload exceeds the 256 KB request limit.");
   }
 
@@ -74,8 +96,10 @@ module.exports = async function handler(req, res) {
 
   const [nullifier, refDate, appId, nonce, issuerHash] = publicSignals.map(String);
 
-  if (!/^[0-9]+$/.test(nullifier) || nullifier.length > 77 || BigInt(nullifier) >= FIELD_MODULUS) {
-    return fail(res, 400, "MALFORMED_PROOF", "Nullifier is not a field element.");
+  for (const signal of [nullifier, refDate, appId, nonce, issuerHash]) {
+    if (!/^[0-9]+$/.test(signal) || signal.length > 77 || BigInt(signal) >= FIELD_MODULUS) {
+      return fail(res, 400, "MALFORMED_PROOF", "Public signal is not a valid field element.");
+    }
   }
   if (refDate !== challenge.payload.ref_date) {
     return fail(
@@ -103,7 +127,7 @@ module.exports = async function handler(req, res) {
   try {
     valid = await snarkjs.groth16.verify(verificationKey, publicSignals.map(String), proof);
   } catch (error) {
-    return fail(res, 400, "PROOF_MALFORMED", "Proof could not be parsed.");
+    return fail(res, 400, "MALFORMED_PROOF", "Proof could not be parsed.");
   }
   const verifyMs = Number(process.hrtime.bigint() - started) / 1e6;
 
@@ -134,8 +158,10 @@ module.exports = async function handler(req, res) {
     return fail(res, 503, "STORE_UNAVAILABLE", "The verifier state store is unavailable.");
   }
 
+  const verifiedAt = new Date().toISOString();
   return sendJson(res, 200, {
     verified: true,
+    policy: "AegisID-KYC-Age-v1",
     claims: { kyc_verified: true, age_over_18: true },
     issuer_registry: registryMode(),
     challenge_id: challenge.payload.cid,
@@ -144,6 +170,8 @@ module.exports = async function handler(req, res) {
     app_id: appId,
     issuer_key_hash: issuerHash,
     verify_ms: Math.round(verifyMs * 100) / 100,
-    store: store.backend
+    store: store.backend,
+    verified_at: verifiedAt,
+    valid_until: new Date(challenge.payload.exp * 1000).toISOString()
   });
 };

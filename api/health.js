@@ -5,6 +5,13 @@ const { getStore } = require("../lib/store");
 const { sendJson, methodNotAllowed } = require("../lib/http");
 const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
 
+/**
+ * Health and operational readiness reporting handler.
+ * Reports store status, issuer trust status, rate limit scope, and demo mode.
+ *
+ * @param {import("http").IncomingMessage} req
+ * @param {import("http").ServerResponse} res
+ */
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return methodNotAllowed(res, ["GET"]);

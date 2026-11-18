@@ -1,5 +1,12 @@
 "use strict";
 
+if (process.stdout?.setMaxListeners) {
+  process.stdout.setMaxListeners(50);
+}
+if (process.stderr?.setMaxListeners) {
+  process.stderr.setMaxListeners(50);
+}
+
 process.env.CHALLENGE_SECRET = "challenge-test-secret";
 
 const assert = require("node:assert/strict");

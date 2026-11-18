@@ -1,5 +1,12 @@
 "use strict";
 
+if (process.stdout?.setMaxListeners) {
+  process.stdout.setMaxListeners(50);
+}
+if (process.stderr?.setMaxListeners) {
+  process.stderr.setMaxListeners(50);
+}
+
 const fs = require("fs");
 const path = require("path");
 const snarkjs = require("snarkjs");

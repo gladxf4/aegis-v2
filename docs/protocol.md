@@ -187,8 +187,7 @@ Response `200`:
 ```json
 {
   "verified": true,
-  "claims": { "kyc_verified": true, "age_over_18": true },
-  "issuer_registry": "sepolia",
+  "policy": "AegisID-KYC-Age-v1",
   "claims": { "kyc_verified": true, "age_over_18": true },
   "issuer_registry": "sepolia",
   "challenge_id": "3f4d3c6e-8a1f-4c0b-a0d1-2f6d3f5b7c90",
@@ -197,7 +196,9 @@ Response `200`:
   "app_id": "21362152712750642513792003393321278365851354122002433278320362367089583611068",
   "issuer_key_hash": "9161555149647200950420109569256698233484789006482508020994125081537056888507",
   "verify_ms": 8.15,
-  "store": "memory"
+  "store": "memory",
+  "verified_at": "2026-11-18T12:00:00.000Z",
+  "valid_until": "2026-11-18T12:05:00.000Z"
 }
 ```
 
@@ -207,7 +208,7 @@ Rejection responses use `200` only for success. Errors return
 | Status | Code                    | Meaning                                                |
 | ------ | ----------------------- | ------------------------------------------------------ |
 | `400`  | `MALFORMED_BODY`        | Body is not a JSON object                              |
-| `400`  | `MALFORMED_PROOF`       | Missing token, proof, or five public signals           |
+| `400`  | `MALFORMED_PROOF`       | Missing token, proof, public signals, or unparseable   |
 | `413`  | `PROOF_TOO_LARGE`       | Proof payload exceeds 256 KB                           |
 | `413`  | `BODY_TOO_LARGE`        | JSON request body exceeds the server limit             |
 | `400`  | `CHALLENGE_INVALID`     | Bad signature, malformed payload, or future issue time |
@@ -216,7 +217,6 @@ Rejection responses use `200` only for success. Errors return
 | `400`  | `REF_DATE_MISMATCH`     | Proof reference date differs from the token            |
 | `400`  | `NONCE_MISMATCH`        | Proof nonce differs from the token                     |
 | `400`  | `UNTRUSTED_ISSUER`      | Issuer key hash is not trusted                         |
-| `400`  | `PROOF_MALFORMED`       | Proof could not be parsed                              |
 | `400`  | `PROOF_INVALID`         | Groth16 verification failed                            |
 | `405`  | `METHOD_NOT_ALLOWED`    | Wrong HTTP method                                      |
 | `409`  | `CHALLENGE_USED`        | Challenge id was already consumed                      |
