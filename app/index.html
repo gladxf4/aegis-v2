@@ -113,11 +113,14 @@
               </div>
 
               <div class="demo-note">
-                <span class="demo-label">Sample data</span>
-                <span
-                  >Built-in credentials are synthetic examples. Import a compatible signed
-                  credential to try your own.</span
-                >
+                <img class="wallet-art" src="/assets/wallet-card.png" alt="" />
+                <div class="demo-copy">
+                  <span class="demo-label">Sample data</span>
+                  <span
+                    >These synthetic samples are one-time. Get another after a check, or import a
+                    compatible signed credential to try your own.</span
+                  >
+                </div>
               </div>
 
               <div class="credential-import">
@@ -205,10 +208,20 @@
                   <button id="copyReceipt" class="text-button" type="button" hidden>
                     Copy receipt
                   </button>
+                  <button id="newSample" class="text-button" type="button" hidden>
+                    Try another sample
+                  </button>
                   <span id="statusBadge" class="badge">Idle</span>
                 </div>
               </div>
               <div id="result" class="result">
+                <img
+                  id="resultMark"
+                  class="result-mark"
+                  src="/assets/verified-mark.png"
+                  alt=""
+                  hidden
+                />
                 <p class="result-title">Ready to check</p>
                 <p class="result-text">
                   Choose a sample credential or import your own, then check eligibility. Your
@@ -344,7 +357,7 @@ prove    EdDSA_verify(
           </div>
           <div class="protocol-flow">
             <img
-              src="/assets/proof-path.svg"
+              src="/assets/proof-route.png"
               alt="Credential stays local while a private proof travels to the verifier."
               width="232"
               height="152"

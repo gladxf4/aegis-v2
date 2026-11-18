@@ -127,13 +127,19 @@ node scripts/prepare-web.js
 
 It verifies that `app/artifacts/age_proof.wasm`,
 `app/artifacts/age_proof_final.zkey`, `config/issuer.json`,
-`app/credentials.json`, and `circuits/build/age_proof_verification_key.json` exist.
+`config/demo-samples.json`, `app/credentials.json`, and
+`circuits/build/age_proof_verification_key.json` exist.
 It copies the current circuit build into `app/artifacts/` and the snarkjs browser
 bundle into `app/vendor/`.
 
 The artifacts in this repository are committed, so the build does not need Circom.
 If you rebuild the circuit locally, commit the updated files or let the build copy
 them from `circuits/build/`.
+
+`GET /api/demo-sample` returns one synthetic adult credential from the 1,024-entry
+pre-signed sample pool. Each sample has a unique UID and remains one-use under the
+normal nullifier check. The pool is a finite convenience for public demos, not an
+issuance service.
 
 ## Health check
 

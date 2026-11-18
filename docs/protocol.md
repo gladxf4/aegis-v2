@@ -102,6 +102,34 @@ nonce, application, reference date, and expiry.
 
 ## Endpoints
 
+### `GET /api/demo-sample`
+
+Returns one randomly selected, pre-signed synthetic adult credential from the finite
+public demo pool. The endpoint does not reserve or consume a credential; the normal
+verification path consumes its nullifier after a successful proof. A client may pass
+`?exclude=<uid>` to avoid receiving the sample it just tried. If another visitor used
+the same sample first, request another and retry.
+
+This endpoint is only a convenience for the public prototype. It does not issue real
+credentials and is not an issuer API.
+
+Response `200`:
+
+```json
+{
+  "credential": {
+    "id": "public-sample-38",
+    "label": "Sample adult credential",
+    "kind": "sample",
+    "dob": "20010514",
+    "uid": "<synthetic credential uid>",
+    "issuer": { "keyHash": "<trusted hash>", "publicKey": { "x": "...", "y": "..." } },
+    "signature": { "r8x": "...", "r8y": "...", "s": "..." }
+  },
+  "pool_size": 1024
+}
+```
+
 ### `GET /api/challenge`
 
 Response `200`:

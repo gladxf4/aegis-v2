@@ -21,7 +21,8 @@ not an identity provider or a production age-assurance service.
 
 ## What works today
 
-- A browser can load a synthetic sample or import a credential JSON file locally.
+- A browser can request a pre-signed synthetic sample from a finite pool or import a
+  credential JSON file locally.
 - The browser creates the Groth16 proof; the server receives only the proof, public
   signals, and challenge token.
 - The verifier pins one issuer key hash, checks the challenge context, and prevents
@@ -37,9 +38,9 @@ copyable receipt is an unsigned summary, not a credential or bearer token.
 The public deployment demonstrates the proof flow. It is not yet a holder wallet or an
 issuer/verifier product:
 
-- **Credential source.** The app ships a public synthetic fixture and accepts a
-  project-specific JSON shape. There is no trusted issuance service or standard
-  credential exchange.
+- **Credential source.** The app serves pre-signed synthetic samples from a pool of
+  1,024 unique credentials and accepts a project-specific JSON shape. There is no
+  trusted issuance service or standard credential exchange.
 - **Credential lifecycle.** Credentials have no expiry or revocation check. Imported
   credentials live in page memory only; there is no wallet backup, recovery, or
   persistent storage.
@@ -47,8 +48,8 @@ issuer/verifier product:
   That is a simplified calendar comparison and does not define a jurisdiction's
   treatment of leap-day birthdays.
 - **Repeat-use policy.** A nullifier is consumed once per credential and application.
-  The verifier has no configurable purpose or time window for repeat checks. The
-  public fixture therefore cannot be used again after its first successful check.
+  The verifier has no configurable purpose or time window for repeat checks. Each
+  pre-signed sample can be used once; the public pool is only a finite demo resource.
 - **Verifier response.** The receipt is an unsigned summary for display and copy. It
   cannot be independently authenticated by another service.
 - **Operations.** There is no rate limiting, alerting, operator audit trail, or
@@ -57,6 +58,20 @@ issuer/verifier product:
 These gaps are product decisions as well as implementation work. A real credential
 issuer, supported age policy, and relying-party use case must be chosen before the app
 can make real-world eligibility claims.
+
+## Recommended build order
+
+1. **Make the public demo repeatable.** Keep a pool of unique, pre-signed synthetic
+   samples so visitors can demonstrate a valid check without disabling replay or
+   nullifier protection. The app now does this for up to 1,024 sample credentials.
+2. **Finish the holder/developer loop.** Add a clearly synthetic local issuer and a
+   small holder wallet workflow, then document how to connect a verifier without
+   claiming that the demo issuer proves anyone's real age.
+3. **Choose interoperability and lifecycle.** Select a credential format and define
+   expiry, revocation, key rotation, portability, and repeat-use semantics with a
+   relying-party use case.
+4. **Prepare a real pilot.** Confirm the issuer, jurisdiction-specific age rule,
+   proving-key ceremony, security review, abuse controls, and operational ownership.
 
 ## What a real pilot needs
 

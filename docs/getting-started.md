@@ -102,14 +102,15 @@ npm run issuer:init
 ```
 
 This creates `issuer/keypair.json` if it does not exist, writes
-`config/issuer.json`, and signs four fixtures in `app/credentials.json`. The private
-key is gitignored. To replace an existing key:
+`config/issuer.json`, signs four acceptance fixtures in `app/credentials.json`, and
+creates 1,024 public synthetic samples in `config/demo-samples.json`. The private key
+is gitignored. To replace an existing key:
 
 ```bash
 node issuer/init.js --rotate
 ```
 
-Rotating the key changes the trusted hash and all demo credentials. It does not
+Rotating the key changes the trusted hash, acceptance fixtures, and sample pool. It does not
 change the circuit, proving key, or verification key.
 
 ## Benchmark the prover

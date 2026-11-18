@@ -11,23 +11,27 @@ issuer/init.js
   |
   |  EdDSA-Poseidon signature over Poseidon(dob, credential_uid)
   v
-app/credentials.json  --->  browser
-                              |
-                              |  GET /api/challenge
-                              v
-                         challenge token (nonce, app_id, ref_date, exp)
-                              |
-                              |  Groth16 proof in the browser
-                              v
-                         POST /api/verify
-                              |
-                              +--> verification key check
-                              +--> trusted issuer hash check
-                              +--> challenge consume
-                              +--> nullifier record
-                              |
-                              v
-                         accept or reject
+config/demo-samples.json
+  |
+  |  GET /api/demo-sample returns one synthetic fixture
+  v
+browser holds credential
+  |
+  |  GET /api/challenge
+  v
+challenge token (nonce, app_id, ref_date, exp)
+  |
+  |  Groth16 proof in the browser
+  v
+POST /api/verify
+  |
+  +--> verification key check
+  +--> trusted issuer hash check
+  +--> challenge consume
+  +--> nullifier record
+  |
+  v
+accept or reject
 ```
 
 ## Components
@@ -48,7 +52,8 @@ that hash.
 
 - `issuer/keypair.json` — private key, local only, gitignored;
 - `config/issuer.json` — public key and trusted key hash, committed;
-- `app/credentials.json` — four signed fixtures, public by design.
+- `config/demo-samples.json` — pre-signed, synthetic pool used by the demo API;
+- `app/credentials.json` — four acceptance fixtures, public by design.
 
 The issuer is a development fixture, not a credential authority.
 
@@ -59,7 +64,7 @@ The issuer is a development fixture, not a credential authority.
 - `app/artifacts/age_proof.wasm` — witness generator;
 - `app/artifacts/age_proof_final.zkey` — Groth16 proving key;
 - `app/vendor/snarkjs.min.js` — unmodified snarkjs browser bundle;
-- `app/credentials.json` — demo credentials.
+- `app/credentials.json` — acceptance fixtures for the local test bench.
 
 Proof generation happens in the tab with `snarkjs.groth16.fullProve`. No private
 input is posted to the server. The browser sends only the proof, the five public
@@ -70,12 +75,13 @@ signals, and the signed challenge token.
 The functions in `api/` export plain Node handlers. The same handlers run under
 Vercel and under the local Express server.
 
-| Handler            | Responsibility                                                 |
-| ------------------ | -------------------------------------------------------------- |
-| `api/challenge.js` | Create an HMAC-signed challenge and return verifier metadata   |
-| `api/verify.js`    | Validate token and signals, verify Groth16 proof, record state |
-| `api/health.js`    | Report readiness, store backend, and demo mode                 |
-| `api/reset.js`     | Clear nullifiers for the current app when demo mode is on      |
+| Handler              | Responsibility                                                 |
+| -------------------- | -------------------------------------------------------------- |
+| `api/challenge.js`   | Create an HMAC-signed challenge and return verifier metadata   |
+| `api/demo-sample.js` | Select one pre-signed synthetic credential from the demo pool  |
+| `api/verify.js`      | Validate token and signals, verify Groth16 proof, record state |
+| `api/health.js`      | Report readiness, store backend, and demo mode                 |
+| `api/reset.js`       | Clear nullifiers for the current app when demo mode is on      |
 
 ### Shared server modules
 
@@ -99,8 +105,9 @@ prover and validates each record against `bench/schema.json`.
 
 ## Request path
 
-1. The browser requests a challenge.
-2. The server creates a payload, signs it with HMAC-SHA256, and returns the token plus
+1. The browser requests a sample credential or the holder imports one locally.
+2. The browser requests a challenge. The server creates a payload, signs it with
+   HMAC-SHA256, and returns the token plus
    the public challenge fields.
 3. The browser selects a credential and builds the circuit input:
 

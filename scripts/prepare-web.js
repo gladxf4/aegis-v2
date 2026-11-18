@@ -57,7 +57,7 @@ for (const item of copies) {
   }
 }
 
-for (const file of ["config/issuer.json", "app/credentials.json"]) {
+for (const file of ["config/issuer.json", "config/demo-samples.json", "app/credentials.json"]) {
   const full = path.join(root, file);
   if (!fs.existsSync(full)) {
     console.error(`missing ${file}`);

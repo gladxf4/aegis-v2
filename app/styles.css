@@ -233,7 +233,9 @@ h1 {
 }
 .result-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
 }
 .muted {
@@ -408,12 +410,23 @@ h1 {
 }
 .demo-note {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 9px;
   margin: -3px 0 12px;
   color: #77857c;
   font-size: 10px;
   line-height: 1.5;
+}
+.demo-copy {
+  display: grid;
+  gap: 5px;
+}
+.wallet-art {
+  display: block;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 58px;
+  object-fit: contain;
 }
 .demo-label {
   flex: 0 0 auto;
@@ -702,6 +715,10 @@ summary:focus-visible {
   border-bottom: 0;
 }
 .result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
   padding: 19px;
   border: 1px solid #e4eae5;
   border-radius: 14px;
@@ -709,15 +726,25 @@ summary:focus-visible {
   background: #f7f9f7;
 }
 .result-title {
+  grid-column: 1;
   margin: 0;
   font: 700 17px var(--display);
   letter-spacing: -0.035em;
 }
 .result-text {
+  grid-column: 1;
   margin: 6px 0 0;
   color: #738078;
   font-size: 12px;
   line-height: 1.65;
+}
+.result-mark {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: block;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
 }
 .result.is-working {
   border-color: #f2dfbf;
@@ -1073,6 +1100,10 @@ summary:focus-visible {
   .journey li {
     min-height: 40px;
     padding: 7px 10px;
+  }
+  .wallet-art {
+    flex-basis: 64px;
+    width: 64px;
   }
   .request-bar {
     align-items: flex-start;

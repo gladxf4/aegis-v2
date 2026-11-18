@@ -3,6 +3,7 @@
 const state = {
   challenge: null,
   credentials: [],
+  testCredentials: [],
   selected: null,
   proof: null,
   health: null,
@@ -30,9 +31,11 @@ const el = {
   credentialDetails: document.getElementById("credentialDetails"),
   proveButton: document.getElementById("proveButton"),
   newChallenge: document.getElementById("newChallenge"),
+  newSample: document.getElementById("newSample"),
   statusBadge: document.getElementById("statusBadge"),
   copyReceipt: document.getElementById("copyReceipt"),
   result: document.getElementById("result"),
+  resultMark: document.getElementById("resultMark"),
   proofMeta: document.getElementById("proofMeta"),
   log: document.getElementById("log"),
   clearLog: document.getElementById("clearLog"),
@@ -164,12 +167,26 @@ function setNotice(message, isError = false) {
 
 function setResult(kind, badge, title, text, meta = []) {
   el.copyReceipt.hidden = kind !== "verified";
+  el.newSample.hidden =
+    !state.selected ||
+    state.selected.kind !== "sample" ||
+    (kind !== "verified" && !(kind === "rejected" && state.submitted));
   if (kind !== "verified") {
     state.receipt = null;
     el.receiptDetails.hidden = true;
     el.receiptPayload.textContent = "";
   }
   el.result.className = `result${kind ? ` is-${kind}` : ""}`;
+  const mark =
+    kind === "verified"
+      ? "/assets/verified-mark.png"
+      : kind === "rejected"
+        ? "/assets/review-mark.png"
+        : "";
+  el.resultMark.hidden = !mark;
+  if (mark) {
+    el.resultMark.src = mark;
+  }
   el.statusBadge.className = `badge${kind ? ` is-${kind}` : ""}`;
   el.statusBadge.textContent = badge;
   el.result.innerHTML = "";
@@ -180,7 +197,7 @@ function setResult(kind, badge, title, text, meta = []) {
   const textNode = document.createElement("p");
   textNode.className = "result-text";
   textNode.textContent = text;
-  el.result.append(titleNode, textNode);
+  el.result.append(el.resultMark, titleNode, textNode);
 
   el.proofMeta.innerHTML = "";
   if (meta.length === 0) {
@@ -302,6 +319,22 @@ async function getChallenge() {
     );
   }
   return body;
+}
+
+async function getDemoSample(excludeUid = "") {
+  const query = excludeUid ? `?exclude=${excludeUid}` : "";
+  const response = await fetch(`/api/demo-sample${query}`, {
+    headers: { Accept: "application/json" }
+  });
+  const body = await readJson(response);
+  if (!response.ok || !body || !validCredentialShape(body.credential)) {
+    throw new Error(
+      body && body.message
+        ? body.message
+        : "A fresh sample is unavailable. Import a credential instead."
+    );
+  }
+  return body.credential;
 }
 
 function renderSession() {
@@ -620,11 +653,15 @@ async function submit() {
         PROOF_INVALID: "Choose another credential or import a valid signed credential.",
         STORE_UNAVAILABLE: "The verifier could not save this result. Wait a moment and try again."
       }[code];
+      const duplicateSampleMessage =
+        code === "DUPLICATE_NULLIFIER" && state.selected.kind === "sample"
+          ? "Another visitor already used this sample. Try a fresh sample below."
+          : null;
       setResult(
         "rejected",
         "Not accepted",
         "Proof not accepted",
-        `${message}${nextStep ? ` ${nextStep}` : ""}`
+        duplicateSampleMessage || `${message}${nextStep ? ` ${nextStep}` : ""}`
       );
       addLog(`Verifier rejected proof: ${code}`);
     }
@@ -721,7 +758,35 @@ async function importCredential(file) {
 }
 
 function credentialFor(id) {
-  return state.credentials.find((credential) => credential.id === id) || null;
+  return (
+    state.testCredentials.find((credential) => credential.id === id) ||
+    state.credentials.find((credential) => credential.id === id) ||
+    null
+  );
+}
+
+async function useAnotherSample() {
+  if (state.proving || state.verifying) {
+    return;
+  }
+  el.newSample.disabled = true;
+  try {
+    const sample = await getDemoSample(state.selected && state.selected.uid);
+    state.credentials = [sample, ...state.credentials.filter((item) => item.kind === "imported")];
+    renderCredentials();
+    selectCredential(sample);
+    await newChallenge();
+    if (!state.challenge) {
+      setCredentialMessage("Fresh sample selected. Refresh the request before checking it.", true);
+      return;
+    }
+    setCredentialMessage("Fresh synthetic sample ready. Check eligibility to run the demo again.");
+    addLog("Fresh demo sample selected");
+  } catch (error) {
+    setCredentialMessage(error.message || "A fresh sample is unavailable.", true);
+  } finally {
+    el.newSample.disabled = false;
+  }
 }
 
 function renderTests() {
@@ -1004,13 +1069,19 @@ async function loadCredentials() {
     throw new Error("Could not load demo credentials.");
   }
   const body = await response.json();
-  state.credentials = body.credentials || [];
-  if (state.credentials.length === 0) {
-    throw new Error("No demo credentials found.");
+  state.testCredentials = Array.isArray(body.credentials) ? body.credentials : [];
+  try {
+    const sample = await getDemoSample();
+    state.credentials = [sample];
+    state.selected = sample;
+  } catch (error) {
+    state.credentials = [];
+    state.selected = null;
+    setCredentialMessage(
+      "No fresh sample is available. Import a compatible signed credential to continue.",
+      true
+    );
   }
-  const initial =
-    state.credentials.find((credential) => credential.id === "adult") || state.credentials[0];
-  state.selected = initial;
 }
 
 function bindEvents() {
@@ -1018,6 +1089,7 @@ function bindEvents() {
     tab.addEventListener("click", () => switchView(tab.dataset.view));
   }
   el.newChallenge.addEventListener("click", newChallenge);
+  el.newSample.addEventListener("click", useAnotherSample);
   el.proveButton.addEventListener("click", prove);
   el.copyReceipt.addEventListener("click", async () => {
     if (!state.receipt) {
@@ -1063,7 +1135,9 @@ async function init() {
   try {
     await Promise.all([loadHealth(), loadCredentials()]);
     renderCredentials();
-    selectCredential(state.selected);
+    if (state.selected) {
+      selectCredential(state.selected);
+    }
     renderTests();
     updateTestSummary();
     await newChallenge();

@@ -74,9 +74,11 @@ credentials that the demo verifier accepts. The file is gitignored, but it exist
 the development machine. Rotate it with `node issuer/init.js --rotate` if it may have
 leaked.
 
-The signed credentials in `app/credentials.json` are public by design. They are test
-fixtures. A visitor can generate a proof with the adult fixture, which is why the
-demo is useful and why it must not be confused with a real credential.
+The signed credentials in `app/credentials.json` are public acceptance fixtures.
+`config/demo-samples.json` contains 1,024 additional pre-signed synthetic adult samples
+for the public demo endpoint. Each sample has a unique UID and can pass the persistent
+nullifier check once per application. The pool is finite, and none of its entries
+represents a real person or identity document.
 
 ## Challenge secret
 

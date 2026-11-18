@@ -54,8 +54,9 @@ npm ci
 npm start
 ```
 
-Open <http://localhost:3000>. The compiled artifacts and demo credentials are part
-of the repository, so a fresh checkout runs without rebuilding the circuit.
+Open <http://localhost:3000>. The compiled circuit, acceptance fixtures, and
+pre-signed sample pool are included, so a fresh checkout runs without rebuilding the
+circuit.
 
 Useful commands:
 
@@ -70,16 +71,17 @@ npm run issuer:init       # create a local issuer key and new demo credentials
 ```
 
 `npm run build:circuits` needs Circom on `PATH`. `npm run issuer:init` writes
-`issuer/keypair.json`, which is gitignored; the matching public key and signed demo
-credentials are safe to publish.
+`issuer/keypair.json`, which is gitignored, plus public acceptance fixtures and a pool
+of synthetic one-time demo credentials.
 
 ## Request flow
 
-1. `GET /api/challenge` returns an HMAC-signed token containing a random nonce, an
+1. The browser requests one pre-signed sample from `GET /api/demo-sample` or imports a
+   credential file.
+2. `GET /api/challenge` returns an HMAC-signed token containing a random nonce, an
    application id, a UTC reference date, and an expiry.
-2. The browser loads `app/credentials.json`, builds the circuit input, and calls
-   `snarkjs.groth16.fullProve` with the local WASM and proving key.
-3. `POST /api/verify` checks the token, the five public signals, the trusted issuer
+3. The browser calls `snarkjs.groth16.fullProve` with the local WASM and proving key.
+4. `POST /api/verify` checks the token, the five public signals, the trusted issuer
    hash, and the Groth16 proof. It then consumes the challenge id and records the
    nullifier.
 
@@ -88,12 +90,13 @@ The public signals are, in order: `nullifier`, `ref_date`, `app_id`, `nonce`,
 
 ## API
 
-| Method | Path             | Purpose                                              |
-| ------ | ---------------- | ---------------------------------------------------- |
-| `GET`  | `/api/challenge` | Issue a challenge token and verifier metadata        |
-| `POST` | `/api/verify`    | Verify a proof and record its nullifier              |
-| `GET`  | `/api/health`    | Report configuration, store backend, and demo mode   |
-| `POST` | `/api/reset`     | Clear nullifiers for the current app; demo mode only |
+| Method | Path               | Purpose                                              |
+| ------ | ------------------ | ---------------------------------------------------- |
+| `GET`  | `/api/challenge`   | Issue a challenge token and verifier metadata        |
+| `GET`  | `/api/demo-sample` | Return one pre-signed synthetic sample credential    |
+| `POST` | `/api/verify`      | Verify a proof and record its nullifier              |
+| `GET`  | `/api/health`      | Report configuration, store backend, and demo mode   |
+| `POST` | `/api/reset`       | Clear nullifiers for the current app; demo mode only |
 
 Verification errors use a stable code in the `error` field, for example
 `CHALLENGE_USED`, `DUPLICATE_NULLIFIER`, `UNTRUSTED_ISSUER`, `APP_MISMATCH`,
@@ -132,7 +135,7 @@ api/                 Vercel functions
 app/                 static front end, credentials, circuit artifacts, snarkjs bundle
 bench/               benchmark harness, schema, exporter
 circuits/            Circom source, build script, generated circuit artifacts
-config/issuer.json   trusted public issuer key and key hash
+config/              trusted issuer config and server-side demo sample pool
 issuer/init.js       local issuer key and demo credential generator
 lib/                 config, challenge tokens, state store, HTTP helpers
 scripts/             deployment asset preparation

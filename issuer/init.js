@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 
-// Creates the demo issuer key, writes the trusted-key config, and signs a
-// small set of synthetic credentials. The key file is local-only; the public
-// config and the signed credentials are safe to publish.
+// Creates the demo issuer key, writes the trusted-key config, and signs
+// acceptance fixtures plus a finite pool of public synthetic samples. The
+// key file is local-only; the public config and credentials are safe to publish.
 
 const crypto = require("crypto");
 const fs = require("fs");
@@ -16,6 +16,8 @@ const configDir = path.join(root, "config");
 const configFile = path.join(configDir, "issuer.json");
 const appDir = path.join(root, "app");
 const credentialsFile = path.join(appDir, "credentials.json");
+const demoSamplesFile = path.join(configDir, "demo-samples.json");
+const demoSampleCount = 1024;
 
 const rotate = process.argv.includes("--rotate");
 
@@ -162,9 +164,32 @@ async function main() {
     credentials
   });
 
+  const demoSamples = Array.from({ length: demoSampleCount }, (_, index) => {
+    const uid = newUid();
+    return {
+      id: `public-sample-${index + 1}`,
+      label: "Sample adult credential",
+      description: "Synthetic example. It can be verified once by this app.",
+      kind: "sample",
+      dob: adultDob,
+      uid,
+      issuedAt,
+      signature: sign(keypair.privateKey, adultDob, uid)
+    };
+  });
+
+  writeJson(demoSamplesFile, {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    issuerKeyHash: trustedKeyHash,
+    issuer: { keyHash: trustedKeyHash, publicKey: keypair.publicKey },
+    note: "Public synthetic fixtures for the demo. Each fixture has a unique credential UID.",
+    credentials: demoSamples
+  });
+
   console.log(`trusted issuer key hash: ${trustedKeyHash}`);
   console.log(
-    `wrote config/issuer.json and app/credentials.json (${credentials.length} credentials)`
+    `wrote issuer config, ${credentials.length} acceptance fixtures, and ${demoSamples.length} public demo samples`
   );
   console.log("run npm run build:circuits if the circuit changed");
 }

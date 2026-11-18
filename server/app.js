@@ -6,6 +6,7 @@ const challenge = require("../api/challenge");
 const verify = require("../api/verify");
 const health = require("../api/health");
 const reset = require("../api/reset");
+const demoSample = require("../api/demo-sample");
 const { sendJson } = require("../lib/http");
 
 const appDir = path.join(__dirname, "..", "app");
@@ -27,6 +28,7 @@ function createApp() {
   app.all("/api/verify", wrap(verify));
   app.all("/api/health", wrap(health));
   app.all("/api/reset", wrap(reset));
+  app.all("/api/demo-sample", wrap(demoSample));
 
   app.use("/api", (req, res) => {
     sendJson(res, 404, { error: "NOT_FOUND" });
