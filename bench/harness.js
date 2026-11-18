@@ -160,6 +160,8 @@ async function main() {
     const input = {
       dob: credential.dob,
       credential_uid: credential.uid,
+      kyc_verified: credential.kyc_verified,
+      expires_at: credential.expires_at,
       issuer_ax: credential.issuer.publicKey.x,
       issuer_ay: credential.issuer.publicKey.y,
       signature_r8x: credential.signature.r8x,

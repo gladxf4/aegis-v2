@@ -8,10 +8,12 @@ The circuit proves, for a credential signed by a trusted issuer, that:
 EdDSA-Poseidon.verify(
   issuer_public_key,
   signature,
-  Poseidon(dob, credential_uid)
+  Poseidon(dob, credential_uid, kyc_verified, expires_at)
 ) = true
 
 Poseidon(issuer_ax, issuer_ay) = issuer_key_hash
+kyc_verified = 1
+expires_at >= ref_date
 ref_date >= 180000
 dob <= ref_date - 180000
 nullifier = Poseidon(credential_uid, app_id)
@@ -29,6 +31,8 @@ Private inputs:
 | -------------------------------- | --------------------------------- |
 | `dob`                            | Date of birth as `YYYYMMDD`       |
 | `credential_uid`                 | Random credential identifier      |
+| `kyc_verified`                   | Issuer-attested KYC status (`1`)  |
+| `expires_at`                     | Credential expiry as `YYYYMMDD`   |
 | `issuer_ax`, `issuer_ay`         | BabyJubjub public key coordinates |
 | `signature_r8x`, `signature_r8y` | EdDSA nonce point                 |
 | `signature_s`                    | EdDSA scalar                      |
@@ -122,7 +126,10 @@ Response `200`:
     "label": "Sample adult credential",
     "kind": "sample",
     "dob": "20010514",
+    "kyc_verified": "1",
+    "expires_at": "20301231",
     "uid": "<synthetic credential uid>",
+    "credentialType": "aegisid.kyc.v1",
     "issuer": { "keyHash": "<trusted hash>", "publicKey": { "x": "...", "y": "..." } },
     "signature": { "r8x": "...", "r8y": "...", "s": "..." }
   },
@@ -144,19 +151,24 @@ Response `200`:
     "ref_date": "20261118",
     "issued_at": "2026-11-18T05:12:03.000Z",
     "expires_at": "2026-11-18T05:17:03.000Z",
-    "ttl_seconds": 300
+    "ttl_seconds": 300,
+    "issuer_key_hash": "<decimal Poseidon hash>"
   },
   "verifier": {
     "app_name": "aegisid-web",
     "app_id": "21362152712750642513792003393321278365851354122002433278320362367089583611068",
-    "issuer_key_hash": "9161555149647200950420109569256698233484789006482508020994125081537056888507",
-    "store": "memory"
+    "issuer_key_hash": "<decimal Poseidon hash>",
+    "issuer_registry": "sepolia",
+    "issuer_registry_address": "0x...",
+    "evm_chain_id": "11155111",
+    "store": "redis"
   }
 }
 ```
 
-Returns `503 SERVER_NOT_CONFIGURED` when the challenge secret or issuer configuration
-is missing.
+The verifier returns `issuer_key_hash` from the on-chain registry when configured;
+otherwise it uses the local committed demo issuer config. Production deployments
+can require the registry with `REQUIRE_ONCHAIN_ISSUER_REGISTRY=1`.
 
 ### `POST /api/verify`
 
@@ -175,6 +187,10 @@ Response `200`:
 ```json
 {
   "verified": true,
+  "claims": { "kyc_verified": true, "age_over_18": true },
+  "issuer_registry": "sepolia",
+  "claims": { "kyc_verified": true, "age_over_18": true },
+  "issuer_registry": "sepolia",
   "challenge_id": "3f4d3c6e-8a1f-4c0b-a0d1-2f6d3f5b7c90",
   "nullifier": "5633922996972560272688258191336331688978696343647728708162359364532893731444",
   "ref_date": "20261118",
@@ -235,8 +251,9 @@ Response `200`:
 }
 ```
 
-`ok` is true only when the challenge secret, issuer key hash, issuer public key, and
-store are all usable.
+`ok` is true only when the challenge secret, issuer key hash, and store are usable.
+The `issuer_registry` fields show whether the verifier is using the local config or
+an EVM registry. Configure a shared Redis store and secrets for a public deployment.
 
 ### `POST /api/reset`
 

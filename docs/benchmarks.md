@@ -33,7 +33,7 @@ Environment:
 | Node.js     | 26.12.1      |
 | Prover      | snarkjs-wasm |
 | Circuit     | `age_proof`  |
-| Constraints | 9,713        |
+| Constraints | 9,969        |
 
 Five runs:
 

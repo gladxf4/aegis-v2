@@ -35,12 +35,16 @@ Vercel. Fix a failed check before promoting a deployment.
 
 ## Required environment variables
 
-| Variable                | Required    | Example                             |
-| ----------------------- | ----------- | ----------------------------------- |
-| `CHALLENGE_SECRET`      | Yes         | output of `openssl rand -base64 32` |
-| `APP_ID`                | Recommended | `aegisid-production`                |
-| `CHALLENGE_TTL_SECONDS` | No          | `300`                               |
-| `ISSUER_KEY_HASH`       | No          | defaults to `config/issuer.json`    |
+| Variable                          | Required    | Example                             |
+| --------------------------------- | ----------- | ----------------------------------- |
+| `CHALLENGE_SECRET`                | Yes         | output of `openssl rand -base64 32` |
+| `APP_ID`                          | Recommended | `aegisid-production`                |
+| `CHALLENGE_TTL_SECONDS`           | No          | `300`                               |
+| `ISSUER_KEY_HASH`                 | No          | defaults to `config/issuer.json`    |
+| `ISSUER_REGISTRY_ADDRESS`         | Optional    | deployed `IssuerRegistry` address   |
+| `EVM_RPC_URL`                     | Optional    | Sepolia JSON-RPC endpoint           |
+| `EVM_CHAIN_ID`                    | Optional    | `11155111` (Sepolia)                |
+| `REQUIRE_ONCHAIN_ISSUER_REGISTRY` | Optional    | `1` to require chain registry       |
 
 Set them for the environments you use:
 
@@ -63,6 +67,42 @@ every nullifier.
 `ISSUER_KEY_HASH` overrides the trusted hash in `config/issuer.json`. Only set it when
 the issuer key is managed outside the repository. It must be the decimal Poseidon hash
 of the issuer public key.
+
+## Sepolia issuer registry
+
+The public demo defaults to Sepolia (chain id `11155111`) when using the optional
+on-chain registry. The registry stores only the issuer public-key hash; holder
+credentials, Aadhaar details, proofs, and nullifiers stay off-chain. Without registry
+environment variables, the demo uses the committed synthetic issuer hash and reports
+`issuer_registry: "config"`.
+
+To anchor the demo issuer on Sepolia:
+
+1. Get Sepolia test ETH from a faucet and open [Remix](https://remix.ethereum.org/).
+2. Create `IssuerRegistry.sol` in Remix and paste in
+   `contracts/IssuerRegistry.sol`. Compile with Solidity `0.8.24` or compatible
+   `0.8.x`.
+3. In the deploy panel, select **Injected Provider - MetaMask**, confirm Sepolia,
+   and deploy `IssuerRegistry` with the decimal `keyHash` from
+   `config/issuer.json` converted to a 32-byte hex value. You can convert it locally:
+
+   ```bash
+   node -e 'const h=require("./config/issuer.json").keyHash; console.log("0x"+BigInt(h).toString(16).padStart(64,"0"))'
+   ```
+
+4. Copy the deployed contract address. Set `ISSUER_REGISTRY_ADDRESS`,
+   `EVM_RPC_URL` (a Sepolia HTTPS RPC URL from a provider), `EVM_CHAIN_ID=11155111`,
+   and `REQUIRE_ONCHAIN_ISSUER_REGISTRY=1` in Vercel for Production. Keep the RPC
+   URL server-side; do not expose a provider key in browser JavaScript.
+5. Redeploy and check `/api/health`. It should report `ok: true`,
+   `issuer_registry: "sepolia"`, the contract address, and chain id `11155111`.
+
+The contract owner can rotate the issuer hash with `setIssuerKeyHash(bytes32)`.
+After a rotation, issue credentials under the new issuer key and update the public
+issuer configuration and verifier artifacts together. The included synthetic issuer
+and public samples are for demonstration only; anchoring their hash does not make them
+real KYC credentials. Use a separate RPC provider key for production and configure
+provider-side access restrictions and quotas.
 
 ## Shared state
 
@@ -177,7 +217,7 @@ Expected production shape:
 ```
 
 If `ok` is false, inspect `challenge_configured`, `issuer_configured`,
-`shared_store_configured`, `store`, and `store_ready`.
+`issuer_registry`, `shared_store_configured`, `store`, and `store_ready`.
 
 ## Integrate from another service
 

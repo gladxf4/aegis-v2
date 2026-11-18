@@ -44,9 +44,9 @@ signals, and challenge token to the verifier.
 The first proof downloads the 2.5 MB WASM and 5.0 MB proving key. Later proofs reuse
 the HTTP cache.
 
-The minor credential and the altered signature fail during witness generation. The
-unrecognized issuer produces a valid proof under a different key; the server rejects
-it with `UNTRUSTED_ISSUER`.
+The minor, incomplete-KYC, expired, and altered-signature credentials fail during
+witness generation. The unrecognized issuer produces a valid proof under a different
+key; the server rejects it with `UNTRUSTED_ISSUER`.
 
 ## Run the tests
 
@@ -102,7 +102,7 @@ npm run issuer:init
 ```
 
 This creates `issuer/keypair.json` if it does not exist, writes
-`config/issuer.json`, signs four acceptance fixtures in `app/credentials.json`, and
+`config/issuer.json`, signs six acceptance fixtures in `app/credentials.json`, and
 creates 1,024 public synthetic samples in `config/demo-samples.json`. The private key
 is gitignored. To replace an existing key:
 
@@ -110,8 +110,9 @@ is gitignored. To replace an existing key:
 node issuer/init.js --rotate
 ```
 
-Rotating the key changes the trusted hash, acceptance fixtures, and sample pool. It does not
-change the circuit, proving key, or verification key.
+Rotating the key changes the trusted hash, acceptance fixtures, and sample pool. Update
+the Sepolia registry to the new hash and reconfigure the app before using the new issuer.
+Key rotation does not change the circuit, proving key, or verification key.
 
 ## Benchmark the prover
 

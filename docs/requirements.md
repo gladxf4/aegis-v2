@@ -2,34 +2,36 @@
 
 ## Goal
 
-Demonstrate a complete zero-knowledge age-verification flow in a browser:
+Demonstrate a reusable issuer-signed KYC and age-eligibility proof flow in a browser:
 
 1. an issuer signs a synthetic credential;
-2. the holder proves, in the browser, that the credential is valid and the date of
-   birth is at least 18 years before a verifier reference date;
+2. the holder proves, in the browser, that the credential is KYC-complete, unexpired,
+   and the date of birth is at least 18 years before a verifier reference date;
 3. the verifier checks the proof, rejects replayed challenges and reused credentials,
    and learns no private credential field.
 
 ## Functional requirements
 
-| ID  | Requirement                                                                               |
-| --- | ----------------------------------------------------------------------------------------- |
-| F1  | The circuit verifies an issuer signature over the credential fields                       |
-| F2  | The circuit binds the signing key to a trusted issuer key hash                            |
-| F3  | The circuit proves `dob <= ref_date - 180000`                                             |
-| F4  | The circuit derives a nullifier from the credential and application id                    |
-| F5  | The browser generates the proof without sending private inputs to the server              |
-| F6  | The server issues a signed, expiring challenge with a nonce                               |
-| F7  | The server rejects a proof whose signals do not match the challenge                       |
-| F8  | The server rejects a proof from an untrusted issuer                                       |
-| F9  | The server rejects a used challenge                                                       |
-| F10 | The server rejects a duplicate nullifier for the application                              |
-| F11 | The state store can be process-local or Redis-backed                                      |
-| F12 | The UI exposes verification, a test bench, and the protocol relation                      |
-| F13 | The deployment is a static site plus serverless API functions                             |
-| F14 | Public demos can request a pre-signed synthetic sample without disabling nullifier checks |
-| F15 | Challenge and proof endpoints enforce shared per-address request limits                   |
-| F16 | Production readiness requires shared Redis for replay and rate-limit state                |
+| ID  | Requirement                                                                                |
+| --- | ------------------------------------------------------------------------------------------ |
+| F1  | The circuit verifies an issuer signature over the credential fields                        |
+| F2  | The circuit binds the signing key to a trusted issuer key hash                             |
+| F3  | The circuit proves `dob <= ref_date - 180000`                                              |
+| F4  | The circuit derives a nullifier from the credential and application id                     |
+| F5  | The browser generates the proof without sending private inputs to the server               |
+| F6  | The server issues a signed, expiring challenge with a nonce                                |
+| F7  | The server rejects a proof whose signals do not match the challenge                        |
+| F8  | The server rejects a proof from an untrusted issuer                                        |
+| F9  | The server rejects a used challenge                                                        |
+| F10 | The server rejects a duplicate nullifier for the application                               |
+| F11 | The state store can be process-local or Redis-backed                                       |
+| F12 | The UI exposes verification, a test bench, and the protocol relation                       |
+| F13 | The deployment is a static site plus serverless API functions                              |
+| F14 | Public demos can request a pre-signed synthetic sample without disabling nullifier checks  |
+| F15 | Challenge and proof endpoints enforce shared per-address request limits                    |
+| F16 | Production readiness requires shared Redis for replay and rate-limit state                 |
+| F17 | The verifier can resolve the trusted issuer hash from a chain-id-checked EVM registry      |
+| F18 | The UI and API disclose only the KYC-complete and 18+ claims, not holder credential fields |
 
 ## Acceptance cases
 
@@ -73,7 +75,7 @@ Demonstrate a complete zero-knowledge age-verification flow in a browser:
 - RSA-2048 or SHA-256 document verification in-circuit.
 - Revocation and credential status.
 - Device binding or mobile native clients.
-- On-chain verification.
+- On-chain verification of Groth16 proofs. The EVM contract anchors issuer trust only.
 - Cross-application Sybil resistance.
 - Distributed abuse controls, audit logging, and a nullifier retention policy.
 - Production trusted setup.
@@ -82,7 +84,8 @@ Demonstrate a complete zero-knowledge age-verification flow in a browser:
 
 - `npm test` passes.
 - `npm run bench -- --runs 3` produces records that validate against the schema.
-- The browser test bench passes all eight cases with `AEGIS_DEMO=1`.
+- The browser test bench covers valid, underage, altered, untrusted, incomplete-KYC,
+  expired, context-mismatch, replay, and duplicate cases with `AEGIS_DEMO=1`.
 - A Vercel deployment returns `ok: true` from `/api/health` with the intended store.
 - Documentation states the cryptographic and operational limitations without
   presenting the prototype as production identity assurance.

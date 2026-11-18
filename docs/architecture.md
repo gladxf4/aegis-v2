@@ -9,7 +9,7 @@ challenge, verifies the proof, and stores a nullifier.
 ```text
 issuer/init.js
   |
-  |  EdDSA-Poseidon signature over Poseidon(dob, credential_uid)
+  |  EdDSA-Poseidon signature over DOB, UID, KYC status, and expiry
   v
 config/demo-samples.json
   |
@@ -19,7 +19,7 @@ browser holds credential
   |
   |  GET /api/challenge
   v
-challenge token (nonce, app_id, ref_date, exp)
+challenge token (nonce, app_id, ref_date, expiry, issuer key hash)
   |
   |  Groth16 proof in the browser
   v
@@ -42,7 +42,7 @@ accept or reject
 comparators, and `EdDSAPoseidonVerifier`. The compiled output is 9,713 constraints
 on BN254.
 
-The circuit treats the issuer public key as private and exposes only
+The circuit verifies the KYC status and expiry with the age predicate. It treats the issuer public key as private and exposes only
 `Poseidon(issuer_ax, issuer_ay)` as the public issuer key hash. The verifier pins
 that hash.
 
@@ -53,9 +53,18 @@ that hash.
 - `issuer/keypair.json` — private key, local only, gitignored;
 - `config/issuer.json` — public key and trusted key hash, committed;
 - `config/demo-samples.json` — pre-signed, synthetic pool used by the demo API;
-- `app/credentials.json` — four acceptance fixtures, public by design.
+- `app/credentials.json` — six acceptance fixtures, public by design.
 
-The issuer is a development fixture, not a credential authority.
+The issuer is a development fixture, not a credential authority. The verifier can
+read the trusted issuer hash from an EVM registry; without one, it falls back to the
+committed synthetic issuer config. Production operators can require the registry.
+
+### EVM issuer registry
+
+`contracts/IssuerRegistry.sol` stores one issuer key hash in storage slot zero and
+restricts updates to its deployer. The verifier reads that slot through a read-only
+JSON-RPC call and checks the chain id before accepting it. The default chain is
+Sepolia. No credential, identity field, proof, or nullifier is written to the chain.
 
 ### Browser app
 
@@ -113,7 +122,8 @@ prover and validates each record against `bench/schema.json`.
 3. The browser selects a credential and builds the circuit input:
 
    ```text
-   private: dob, credential_uid, issuer_ax, issuer_ay,
+   private: dob, credential_uid, kyc_verified, expires_at,
+            issuer_ax, issuer_ay,
             signature_r8x, signature_r8y, signature_s
    public:  ref_date, app_id, nonce, issuer_key_hash
    output:  nullifier
@@ -134,6 +144,7 @@ prover and validates each record against `bench/schema.json`.
 | Credential holder to browser | Credential fields and issuer signature          |
 | Browser to verifier          | Proof, five public signals, challenge token     |
 | Issuer to verifier           | Trusted public key hash, configured out of band |
+| EVM registry to verifier     | Public issuer key hash and chain id             |
 | Verifier to state store      | Challenge ids and nullifiers                    |
 | Operator to deployment       | Secrets, app id, trusted issuer hash            |
 

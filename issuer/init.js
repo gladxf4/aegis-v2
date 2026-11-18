@@ -83,9 +83,9 @@ async function main() {
   const roguePublic = publicFromPrivate(eddsa, roguePrivate);
   const rogueKeyHash = F.toString(poseidon([BigInt(roguePublic.x), BigInt(roguePublic.y)]));
 
-  const sign = (privateHex, dob, uid) => {
+  const sign = (privateHex, dob, uid, kycVerified, expiresAt) => {
     const privateKey = Buffer.from(privateHex, "hex");
-    const message = poseidon([BigInt(dob), BigInt(uid)]);
+    const message = poseidon([BigInt(dob), BigInt(uid), BigInt(kycVerified), BigInt(expiresAt)]);
     const signature = eddsa.signPoseidon(privateKey, message);
     return {
       r8x: eddsa.F.toString(signature.R8[0]),
@@ -96,10 +96,12 @@ async function main() {
 
   const newUid = () => BigInt(`0x${crypto.randomBytes(16).toString("hex")}`).toString();
   const issuedAt = new Date().toISOString();
+  const kycVerified = "1";
+  const expiresAt = "20301231";
 
   const adultUid = newUid();
   const adultDob = "20010514";
-  const adultSignature = sign(keypair.privateKey, adultDob, adultUid);
+  const adultSignature = sign(keypair.privateKey, adultDob, adultUid, kycVerified, expiresAt);
 
   const minorUid = newUid();
   const minorDob = "20100820";
@@ -109,52 +111,96 @@ async function main() {
   const credentials = [
     {
       id: "adult",
-      label: "Adult credential",
-      description: "Valid issuer signature. Date of birth is 18 years or more before today.",
+      label: "Synthetic KYC credential",
+      description: "Issuer attests KYC completion; the credential proves 18+ until expiry.",
       kind: "valid",
       dob: adultDob,
       uid: adultUid,
+      kyc_verified: kycVerified,
+      expires_at: expiresAt,
       issuedAt,
       issuer: { keyHash: trustedKeyHash, publicKey: keypair.publicKey },
-      signature: adultSignature
+      signature: adultSignature,
+      credentialType: "aegisid.kyc.v1"
     },
     {
       id: "minor",
-      label: "Minor credential",
-      description: "Valid issuer signature. Date of birth is under 18 years before today.",
+      label: "Synthetic minor credential",
+      description: "Valid KYC attestation, but the age claim is under 18.",
       kind: "valid",
       dob: minorDob,
       uid: minorUid,
+      kyc_verified: kycVerified,
+      expires_at: expiresAt,
       issuedAt,
       issuer: { keyHash: trustedKeyHash, publicKey: keypair.publicKey },
-      signature: sign(keypair.privateKey, minorDob, minorUid)
+      signature: sign(keypair.privateKey, minorDob, minorUid, kycVerified, expiresAt),
+      credentialType: "aegisid.kyc.v1"
     },
     {
       id: "altered",
-      label: "Altered credential",
+      label: "Altered KYC credential",
       description: "Issuer signature changed after issuance. The circuit must reject it.",
       kind: "invalid",
       dob: adultDob,
       uid: adultUid,
+      kyc_verified: kycVerified,
+      expires_at: expiresAt,
       issuedAt,
       issuer: { keyHash: trustedKeyHash, publicKey: keypair.publicKey },
       signature: {
         ...adultSignature,
         s: (BigInt(adultSignature.s) + 1n).toString()
-      }
+      },
+      credentialType: "aegisid.kyc.v1"
     },
     {
       id: "untrusted",
-      label: "Unrecognized issuer",
+      label: "Unrecognized KYC issuer",
       description: "Signed by a key that is not on the verifier's trusted list.",
       kind: "invalid",
       dob: adultDob,
       uid: untrustedUid,
+      kyc_verified: kycVerified,
+      expires_at: expiresAt,
       issuedAt,
       issuer: { keyHash: rogueKeyHash, publicKey: roguePublic },
-      signature: sign(roguePrivate, adultDob, untrustedUid)
+      signature: sign(roguePrivate, adultDob, untrustedUid, kycVerified, expiresAt),
+      credentialType: "aegisid.kyc.v1"
     }
   ];
+
+  const unverifiedUid = newUid();
+  credentials.push({
+    id: "unverified-kyc",
+    label: "KYC not completed",
+    description: "Signed credential with no completed KYC attestation.",
+    kind: "invalid",
+    dob: adultDob,
+    uid: unverifiedUid,
+    kyc_verified: "0",
+    expires_at: expiresAt,
+    issuedAt,
+    issuer: { keyHash: trustedKeyHash, publicKey: keypair.publicKey },
+    signature: sign(keypair.privateKey, adultDob, unverifiedUid, "0", expiresAt),
+    credentialType: "aegisid.kyc.v1"
+  });
+
+  const expiredUid = newUid();
+  credentials.push({
+    id: "expired",
+    label: "Expired KYC credential",
+    description: "Signed KYC credential whose validity ended before the request date.",
+    kind: "invalid",
+    dob: adultDob,
+    uid: expiredUid,
+    kyc_verified: kycVerified,
+    expires_at: "20200101",
+    issuedAt,
+    issuer: { keyHash: trustedKeyHash, publicKey: keypair.publicKey },
+    signature: sign(keypair.privateKey, adultDob, expiredUid, kycVerified, "20200101"),
+    credentialType: "aegisid.kyc.v1"
+  });
 
   writeJson(credentialsFile, {
     version: 1,
@@ -168,13 +214,16 @@ async function main() {
     const uid = newUid();
     return {
       id: `public-sample-${index + 1}`,
-      label: "Sample adult credential",
-      description: "Synthetic example. It can be verified once by this app.",
+      label: "Synthetic KYC credential",
+      description: "Synthetic KYC-complete credential. It can be proved once per app.",
       kind: "sample",
       dob: adultDob,
       uid,
+      kyc_verified: kycVerified,
+      expires_at: expiresAt,
       issuedAt,
-      signature: sign(keypair.privateKey, adultDob, uid)
+      signature: sign(keypair.privateKey, adultDob, uid, kycVerified, expiresAt),
+      credentialType: "aegisid.kyc.v1"
     };
   });
 

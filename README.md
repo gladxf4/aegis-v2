@@ -1,23 +1,24 @@
-# AegisID — private 18+ checks for online services
+# AegisID — reusable, privacy-preserving KYC proofs
 
-A working prototype of zero-knowledge age verification. A credential holder proves
-that their date of birth is at least 18 years before a verifier-supplied reference
-date. The proof is generated in the browser. The server verifies the proof and
-records an application-scoped nullifier. The request does not contain the date of
-birth, credential identifier, signature, or full issuer key. The issuer key hash is
-public verification metadata and is included in the proof signals.
+AegisID explores how a holder could reuse an issuer-signed KYC credential without
+re-uploading identity documents to every service. The browser proves that a trusted
+issuer marked KYC complete, the credential is unexpired, and the holder is 18 or older.
+The proof is generated locally; the verifier sees the claims and an app-scoped
+pseudonym, not the source document, date of birth, credential UID, signature, or full
+issuer key.
 
-This is an India-first technical pilot for online services that need an 18+ check. It
-uses synthetic credentials, not a production identity source, and does not process real
-government documents. An 18+ proof is not parental consent and does not by itself make
-a service compliant with India's data-protection framework.
+This is an India-first engineering prototype with synthetic credentials. Its demo
+issuer does not inspect identity documents and does not perform real KYC. It does not
+replace a regulated entity's CDD or V-CIP, connect to CKYCR or DigiLocker, or access
+CIBIL data. A KYC/age proof is not parental consent or a DPDP compliance certificate.
 
 ## Why this prototype is useful
 
-Most age gates ask for a full birth date or a copy of an identity document. AegisID
-shows the alternative end to end: import a signed credential, prove one age rule in the
-browser, and return a verifier receipt without transmitting the date of birth or
-credential identifier. The holder can inspect the exact disclosure before proceeding.
+Repeated onboarding can ask a person to upload the same identity files and reveal more
+than a service needs. AegisID demonstrates the holder-side part of an alternative:
+import a signed, expiring KYC credential, prove only KYC completion and 18+ in the
+browser, and return a verifier result without transmitting the underlying identity
+fields. A real issuer and relying service must authorize and accept this workflow.
 
 The demo is designed to make the trade-offs visible to both sides:
 
@@ -35,7 +36,8 @@ is not an independently verifiable credential or an authorization token.
 
 - Circom circuit with an actual EdDSA-Poseidon signature check on BabyJubjub.
   The issuer key is bound to a trusted key hash in-circuit.
-- Age predicate evaluated against a verifier-selected reference date.
+- KYC-complete flag and expiry date are covered by the issuer signature and enforced
+  in-circuit; the proof also checks the 18+ age predicate.
 - Application-scoped nullifier derived inside the circuit.
 - Browser-side Groth16 proving with `snarkjs`.
 - Stateless, HMAC-signed challenge tokens with expiry and a single-use challenge id.
@@ -85,7 +87,8 @@ of synthetic one-time demo credentials.
 1. The browser requests one pre-signed sample from `GET /api/demo-sample` or imports a
    credential file.
 2. `GET /api/challenge` returns an HMAC-signed token containing a random nonce, an
-   application id, a UTC reference date, and an expiry.
+   application id, a UTC reference date, an expiry, and the verifier's trusted issuer
+   hash (from Sepolia when configured).
 3. The browser calls `snarkjs.groth16.fullProve` with the local WASM and proving key.
 4. `POST /api/verify` checks the token, the five public signals, the trusted issuer
    hash, and the Groth16 proof. It then consumes the challenge id and records the
@@ -129,7 +132,9 @@ third-party scripts and connections.
 The repository is set up for Vercel: static output from `app/`, functions in `api/`,
 and a build command that checks and syncs browser artifacts. Set `CHALLENGE_SECRET`
 and configure shared Redis before relying on replay or duplicate protection in a
-serverless deployment. Process-local memory is for local development only.
+serverless deployment. The optional Sepolia `IssuerRegistry` anchors the synthetic
+issuer key hash; its address and a server-side JSON-RPC URL are configured through
+environment variables. Process-local memory is for local development only.
 
 See [docs/deployment.md](docs/deployment.md) for the environment variables and the
 deployment checklist.
@@ -142,6 +147,7 @@ app/                 static front end, credentials, circuit artifacts, snarkjs b
 bench/               benchmark harness, schema, exporter
 circuits/            Circom source, build script, generated circuit artifacts
 config/              trusted issuer config and server-side demo sample pool
+contracts/           EVM testnet issuer trust registry
 issuer/init.js       local issuer key and demo credential generator
 lib/                 config, challenge tokens, state store, HTTP helpers
 scripts/             deployment asset preparation

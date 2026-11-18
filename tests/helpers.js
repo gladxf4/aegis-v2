@@ -26,6 +26,8 @@ function proofInput(item, context) {
   return {
     dob: item.dob,
     credential_uid: item.uid,
+    kyc_verified: item.kyc_verified,
+    expires_at: item.expires_at,
     issuer_ax: item.issuer.publicKey.x,
     issuer_ay: item.issuer.publicKey.y,
     signature_r8x: item.signature.r8x,

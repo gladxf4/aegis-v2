@@ -5,6 +5,7 @@ const { createChallenge } = require("../lib/challenge");
 const { getStore } = require("../lib/store");
 const { sendJson, methodNotAllowed } = require("../lib/http");
 const { enforceRateLimit } = require("../lib/rate-limit");
+const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -34,7 +35,18 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const challenge = createChallenge();
+  let issuerKeyHash;
+  try {
+    issuerKeyHash = await getTrustedIssuerHash();
+  } catch (error) {
+    console.error("issuer registry unavailable:", error.message);
+    return sendJson(res, 503, {
+      error: "ISSUER_REGISTRY_UNAVAILABLE",
+      message: "The trusted issuer registry is unavailable."
+    });
+  }
+
+  const challenge = createChallenge({ issuerKeyHash });
   const store = getStore();
 
   return sendJson(res, 200, {
@@ -43,7 +55,10 @@ module.exports = async function handler(req, res) {
     verifier: {
       app_name: config.appName,
       app_id: config.appId,
-      issuer_key_hash: config.issuerKeyHash,
+      issuer_key_hash: issuerKeyHash,
+      issuer_registry: registryMode(),
+      issuer_registry_address: config.issuerRegistryAddress,
+      evm_chain_id: config.chainRegistryConfigured ? config.evmChainId : null,
       store: store.backend
     }
   });

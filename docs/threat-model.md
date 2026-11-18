@@ -8,17 +8,17 @@ government issuer, a production identity database, or a mobile operating system.
 
 ## Assets
 
-| Asset                 | Where it lives                            |
-| --------------------- | ----------------------------------------- |
-| Date of birth         | Browser and credential fixture            |
-| Credential UID        | Browser and credential fixture            |
-| Issuer signature      | Browser and credential fixture            |
-| Issuer private key    | `issuer/keypair.json`, local only         |
-| Trusted issuer hash   | `config/issuer.json` or `ISSUER_KEY_HASH` |
-| Challenge HMAC secret | Environment variable                      |
-| Challenge state       | Memory or Redis                           |
-| Nullifier registry    | Memory or Redis                           |
-| Rate-limit counters   | Memory or Redis; one-minute windows       |
+| Asset                 | Where it lives                      |
+| --------------------- | ----------------------------------- |
+| Date of birth         | Browser and credential fixture      |
+| Credential UID        | Browser and credential fixture      |
+| Issuer signature      | Browser and credential fixture      |
+| Issuer private key    | `issuer/keypair.json`, local only   |
+| Trusted issuer hash   | EVM registry or local demo config   |
+| Challenge HMAC secret | Environment variable                |
+| Challenge state       | Memory or Redis                     |
+| Nullifier registry    | Memory or Redis                     |
+| Rate-limit counters   | Memory or Redis; one-minute windows |
 
 ## Adversaries
 
@@ -36,6 +36,8 @@ For a verifier that pins the correct issuer hash and keeps its secret:
 
 - A proof cannot be accepted unless the credential signature verifies under the
   trusted issuer key.
+- A proof cannot be accepted unless the issuer-signed KYC status is complete and the
+  credential is unexpired for the reference date.
 - A proof cannot be accepted unless the date of birth satisfies the age predicate for
   the reference date in the challenge.
 - A proof cannot be accepted for a different application id, reference date, or
@@ -51,6 +53,7 @@ For a verifier that pins the correct issuer hash and keeps its secret:
 | -------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | Forge a signature          | EdDSA-Poseidon verification in-circuit                                               | A break in BabyJubjub or Poseidon                                      |
 | Swap in another issuer key | `issuer_key_hash` constraint and server pin                                          | Operator pins the wrong hash                                           |
+| Misconfigure registry RPC  | Chain id check, nonzero hash requirement, short request timeout                      | RPC provider or registry owner can still withhold or change trust      |
 | Claim an underage DOB      | Age constraint in-circuit                                                            | Date encoding edge cases                                               |
 | Replay a proof             | Nonce binding, token expiry, challenge consume                                       | Token stolen before use                                                |
 | Reuse a credential         | Nullifier registry                                                                   | Memory store loses state on restart                                    |
@@ -151,7 +154,8 @@ over and review those headers.
 - Set a high-entropy `CHALLENGE_SECRET`.
 - Configure Redis and verify `store_ready` in health checks.
 - Disable `AEGIS_DEMO`.
-- Pin `APP_ID` and `ISSUER_KEY_HASH` per environment.
+- Pin `APP_ID` per environment and verify the registry address, chain id, and active
+  issuer key hash.
 - Configure Vercel Firewall controls for distributed abuse and monitor the built-in
   endpoint limits.
 - Monitor `STORE_UNAVAILABLE`, `PROOF_INVALID`, and `DUPLICATE_NULLIFIER` rates.

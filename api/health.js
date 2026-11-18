@@ -3,6 +3,7 @@
 const { config } = require("../lib/config");
 const { getStore } = require("../lib/store");
 const { sendJson, methodNotAllowed } = require("../lib/http");
+const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -10,15 +11,25 @@ module.exports = async function handler(req, res) {
   }
 
   const store = getStore();
-  const storeReady = await store.ping();
+  const [storeReady, registry] = await Promise.all([
+    store.ping(),
+    getTrustedIssuerHash()
+      .then((issuerKeyHash) => ({ ready: Boolean(issuerKeyHash), issuerKeyHash }))
+      .catch(() => ({ ready: false, issuerKeyHash: null }))
+  ]);
 
   return sendJson(res, 200, {
-    ok: Boolean(config.ready && storeReady),
+    ok: Boolean(config.ready && storeReady && registry.ready),
     version: config.version,
     app_name: config.appName,
     app_id: config.appId,
-    issuer_key_hash: config.issuerKeyHash,
-    issuer_configured: Boolean(config.issuerKeyHash),
+    issuer_key_hash: registry.issuerKeyHash,
+    issuer_configured: registry.ready,
+    issuer_registry: registryMode(),
+    issuer_registry_configured: config.chainRegistryConfigured,
+    issuer_registry_required: config.requireOnchainIssuerRegistry,
+    issuer_registry_address: config.issuerRegistryAddress,
+    evm_chain_id: config.chainRegistryConfigured ? config.evmChainId : null,
     challenge_configured: Boolean(config.challengeSecret),
     challenge_ttl_seconds: config.challengeTtlSeconds,
     store: store.backend,

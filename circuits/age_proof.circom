@@ -5,11 +5,12 @@ include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/eddsaposeidon.circom";
 
 // Proves, for a credential signed by a trusted issuer:
-//   1. the EdDSA signature covers Poseidon(dob, credential_uid);
+//   1. the EdDSA signature covers the age, holder, KYC status, and expiry;
 //   2. Poseidon(issuer_ax, issuer_ay) equals issuer_key_hash;
 //   3. dob <= ref_date - 180000 (YYYYMMDD encoding);
-//   4. nullifier = Poseidon(credential_uid, app_id);
-//   5. nonce is part of the R1CS so the proof is bound to it.
+//   4. the issuer marked KYC complete and the credential has not expired;
+//   5. nullifier = Poseidon(credential_uid, app_id);
+//   6. nonce is part of the R1CS so the proof is bound to it.
 //
 // The issuer public key (ax, ay) is private. Only its Poseidon hash is
 // public. A verifier accepts the proof only if that hash is on its trusted
@@ -18,6 +19,8 @@ template AgeProof() {
     // Credential fields. These never leave the prover.
     signal input dob;
     signal input credential_uid;
+    signal input kyc_verified;
+    signal input expires_at;
     signal input issuer_ax;
     signal input issuer_ay;
     signal input signature_r8x;
@@ -34,9 +37,11 @@ template AgeProof() {
     signal output nullifier;
 
     // 1. The message the issuer signed.
-    component message = Poseidon(2);
+    component message = Poseidon(4);
     message.inputs[0] <== dob;
     message.inputs[1] <== credential_uid;
+    message.inputs[2] <== kyc_verified;
+    message.inputs[3] <== expires_at;
 
     // 2. EdDSA-Poseidon verification over BabyJubjub.
     // The component has no output; with enabled = 1 it constrains
@@ -49,6 +54,13 @@ template AgeProof() {
     signature.R8x <== signature_r8x;
     signature.R8y <== signature_r8y;
     signature.M <== message.out;
+
+    // Only credentials attested as KYC-complete and valid on the request date pass.
+    kyc_verified === 1;
+    component credentialExpiry = GreaterEqThan(32);
+    credentialExpiry.in[0] <== expires_at;
+    credentialExpiry.in[1] <== ref_date;
+    credentialExpiry.out === 1;
 
     // 3. Bind the signing key to the trusted issuer hash.
     component keyHash = Poseidon(2);

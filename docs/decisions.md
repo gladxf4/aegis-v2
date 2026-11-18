@@ -7,8 +7,8 @@ called that issuer authentication. A prover could compute the same value without
 signature.
 
 **Decision.** Use Circomlib `EdDSAPoseidonVerifier` over BabyJubjub. The issuer signs
-`Poseidon(dob, credential_uid)`. The circuit constrains the signature and the trusted
-issuer key hash.
+`Poseidon(dob, credential_uid, kyc_verified, expires_at)`. The circuit constrains the
+signature and the trusted issuer key hash.
 
 **Consequences.** The relation now depends on a real signature check. The cost is
 9,713 constraints and a larger proving key. The scheme is not RSA, so it is not
@@ -96,11 +96,12 @@ an adversary who can recover the toxic waste.
 verifier and a native mobile prover were not tested against this circuit and would
 need separate artifacts and maintenance.
 
-**Decision.** Remove the contract, demo site, and mobile stub. Keep the repository
-focused on the browser prover and the HTTP verifier.
+**Decision.** The earlier iteration removed an untested contract and mobile stub to
+keep the demo focused on a working browser prover and HTTP verifier. The current
+`IssuerRegistry.sol` is a narrowly scoped trust anchor, not an on-chain proof verifier.
 
-**Consequences.** The documented surface matches the working code. On-chain
-verification and a native prover remain future work.
+**Consequences.** Groth16 proof verification remains server-side. The testnet contract
+stores only a public issuer-key hash; a native prover remains future work.
 
 ## ADR-010: Plain front end without a build step
 

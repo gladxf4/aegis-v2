@@ -6,8 +6,8 @@
 | ----------------- | ------------------------------- |
 | Proof system      | Groth16                         |
 | Curve             | BN254                           |
-| Constraint count  | 9,713                           |
-| Private inputs    | 7                               |
+| Constraint count  | 9,969                           |
+| Private inputs    | 9                               |
 | Public inputs     | 4                               |
 | Public outputs    | 1                               |
 | Witness generator | Circom 2.2 compiled WebAssembly |
@@ -24,7 +24,7 @@ and edge cases.
 
 This build uses EdDSA-Poseidon instead:
 
-- the issuer signs `Poseidon(dob, credential_uid)` with a BabyJubjub key;
+- the issuer signs `Poseidon(dob, credential_uid, kyc_verified, expires_at)` with a BabyJubjub key;
 - the circuit verifies that signature with Circomlib's
   `EdDSAPoseidonVerifier`;
 - the circuit hashes the issuer public key with Poseidon and compares it to the
@@ -50,7 +50,7 @@ h = Poseidon(R8x, R8y, A.x, A.y, M)
 The message is:
 
 ```text
-M = Poseidon(dob, credential_uid)
+M = Poseidon(dob, credential_uid, kyc_verified, expires_at)
 ```
 
 The verifier also constrains:
@@ -73,7 +73,8 @@ exposes:
 issuer_key_hash = Poseidon(issuer_ax, issuer_ay)
 ```
 
-The server pins `issuer_key_hash` from `config/issuer.json` or `ISSUER_KEY_HASH`.
+The server pins `issuer_key_hash` from the configured EVM registry when enabled, or
+from `config/issuer.json` / `ISSUER_KEY_HASH` for the synthetic demo.
 Because the key coordinates are private, a proof does not reveal which trusted key
 signed the credential unless the application already knows the issuer set.
 
@@ -94,6 +95,10 @@ The circuit also constrains `ref_date >= 180000` so the subtraction cannot wrap 
 zero. This encoding is valid for the supported date range and does not account for
 leap days; the comparison is exact at the day level and treats the same month and day
 eighteen years earlier as the boundary.
+
+The signed `kyc_verified` field must equal `1`, and the signed `expires_at` date must
+be on or after the verifier's UTC reference date. Neither field establishes that a
+real organization performed compliant identity checks; that depends on the issuer.
 
 ## Nullifier
 

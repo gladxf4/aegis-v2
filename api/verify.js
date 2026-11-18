@@ -7,6 +7,7 @@ const { verifyChallenge } = require("../lib/challenge");
 const { getStore } = require("../lib/store");
 const { sendJson, methodNotAllowed, getBody } = require("../lib/http");
 const { enforceRateLimit } = require("../lib/rate-limit");
+const { getTrustedIssuerHash, registryMode } = require("../lib/issuer-registry");
 
 function fail(res, status, code, message, extra = {}) {
   return sendJson(res, status, { verified: false, error: code, message, ...extra });
@@ -58,6 +59,19 @@ module.exports = async function handler(req, res) {
     return fail(res, 400, challenge.code, challenge.message);
   }
 
+  let trustedIssuerHash;
+  try {
+    trustedIssuerHash = await getTrustedIssuerHash();
+  } catch (error) {
+    console.error("issuer registry unavailable:", error.message);
+    return fail(
+      res,
+      503,
+      "ISSUER_REGISTRY_UNAVAILABLE",
+      "The trusted issuer registry is unavailable."
+    );
+  }
+
   const [nullifier, refDate, appId, nonce, issuerHash] = publicSignals.map(String);
 
   if (!/^[0-9]+$/.test(nullifier) || nullifier.length > 77 || BigInt(nullifier) >= FIELD_MODULUS) {
@@ -77,7 +91,10 @@ module.exports = async function handler(req, res) {
   if (nonce !== challenge.payload.nonce) {
     return fail(res, 400, "NONCE_MISMATCH", "Proof was generated for a different challenge nonce.");
   }
-  if (issuerHash !== config.issuerKeyHash) {
+  if (
+    issuerHash !== trustedIssuerHash ||
+    issuerHash !== String(challenge.payload.issuer_key_hash)
+  ) {
     return fail(res, 400, "UNTRUSTED_ISSUER", "Issuer key is not on the trusted list.");
   }
 
@@ -119,6 +136,8 @@ module.exports = async function handler(req, res) {
 
   return sendJson(res, 200, {
     verified: true,
+    claims: { kyc_verified: true, age_over_18: true },
+    issuer_registry: registryMode(),
     challenge_id: challenge.payload.cid,
     nullifier,
     ref_date: refDate,

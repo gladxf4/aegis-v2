@@ -62,11 +62,27 @@ function setChallengeStatus(message, status) {
 const SCENARIOS = [
   {
     id: "adult",
-    name: "Valid adult",
-    note: "Issuer signature valid, age 18 or older.",
+    name: "KYC complete + 18+",
+    note: "Trusted issuer attests KYC completion; holder also meets 18+ rule.",
     expected: "verified",
     expectedLabel: "Verified",
     credential: "adult"
+  },
+  {
+    id: "unverified-kyc",
+    name: "KYC incomplete",
+    note: "A valid issuer signature cannot turn an incomplete KYC claim into a pass.",
+    expected: "proof-failed",
+    expectedLabel: "Proof rejected",
+    credential: "unverified-kyc"
+  },
+  {
+    id: "expired",
+    name: "Expired credential",
+    note: "A KYC credential past its signed expiry date must fail.",
+    expected: "proof-failed",
+    expectedLabel: "Proof rejected",
+    credential: "expired"
   },
   {
     id: "minor",
@@ -479,7 +495,9 @@ function selectCredential(credential) {
   el.credentialDetails.innerHTML = "";
   el.credentialDetails.append(
     detail("Credential UID", short(credential.uid), credential.uid),
+    detail("KYC status · local", credential.kyc_verified === "1" ? "Verified" : "Incomplete"),
     detail("Date of birth · local", formatDate(credential.dob)),
+    detail("Valid through · local", formatDate(credential.expires_at)),
     detail("Issuer key hash", short(credential.issuer.keyHash), credential.issuer.keyHash),
     detail("Issuer signature", "Present", credential.signature.r8x)
   );
@@ -497,6 +515,8 @@ function proofInput(credential, challenge, overrides = {}) {
   return {
     dob: credential.dob,
     credential_uid: credential.uid,
+    kyc_verified: credential.kyc_verified,
+    expires_at: credential.expires_at,
     issuer_ax: credential.issuer.publicKey.x,
     issuer_ay: credential.issuer.publicKey.y,
     signature_r8x: credential.signature.r8x,
@@ -571,7 +591,7 @@ async function prove() {
       "rejected",
       "Rejected",
       "Circuit rejected the credential",
-      "No proof was produced. The witness does not satisfy the age or signature constraints."
+      "No proof was produced. The issuer signature, KYC status, expiry, or age rule did not pass."
     );
     addLog("Proof generation rejected by circuit");
   } finally {
@@ -618,6 +638,7 @@ async function submit() {
         type: "aegisid-verification-receipt",
         version: 1,
         verified: true,
+        claims: body.claims,
         app_id: body.app_id,
         challenge_id: body.challenge_id,
         ref_date: body.ref_date,
@@ -631,8 +652,9 @@ async function submit() {
         "verified",
         "Verified",
         "Eligibility confirmed",
-        "The verifier accepted this one-time proof. Your birth date and credential ID stayed on this device.",
+        "The verifier accepted the KYC-complete and 18+ claims. Your source document, birth date, and credential ID stayed on this device.",
         [
+          { label: "Claims", value: "KYC complete · 18+" },
           { label: "Nullifier", value: short(body.nullifier, 10, 8), title: body.nullifier },
           { label: "Verification time", value: `${body.verify_ms} ms` },
           { label: "State store", value: body.store },
@@ -708,8 +730,11 @@ function validCredentialShape(value) {
   return Boolean(
     value &&
     typeof value === "object" &&
+    value.credentialType === "aegisid.kyc.v1" &&
     date(value.dob) &&
+    date(value.expires_at) &&
     decimal(value.uid) &&
+    (value.kyc_verified === "0" || value.kyc_verified === "1") &&
     value.issuer &&
     decimal(value.issuer.keyHash) &&
     value.issuer.publicKey &&
@@ -1051,8 +1076,10 @@ async function loadHealth() {
       throw new Error("Health check failed.");
     }
     state.health = body;
-    el.healthLine.textContent = body.ok ? `ready - ${body.store} state` : "not ready";
-    el.storeMode.textContent = `state: ${body.store}`;
+    el.healthLine.textContent = body.ok
+      ? `ready - ${body.store} state · issuer ${body.issuer_registry}`
+      : "not ready";
+    el.storeMode.textContent = `state: ${body.store} · issuer: ${body.issuer_registry}`;
     el.resetRegistry.hidden = !body.demo_mode;
     el.runAll.disabled = !body.demo_mode;
     el.runAll.title = body.demo_mode ? "" : "Requires AEGIS_DEMO=1";

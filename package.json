@@ -2,7 +2,7 @@
   "name": "aegisid",
   "version": "0.2.0",
   "private": true,
-  "description": "Browser-side zero-knowledge age checks for online services",
+  "description": "Reusable privacy-preserving KYC claims with browser-side zero-knowledge proofs",
   "license": "MIT",
   "type": "commonjs",
   "engines": {
