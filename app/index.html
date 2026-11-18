@@ -8,6 +8,7 @@
       name="description"
       content="Prove an age threshold in your browser without sending a birth date or credential identifier to the verifier."
     />
+    <meta name="theme-color" content="#f4f5f1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -15,7 +16,7 @@
     <header class="site-header">
       <div class="shell header-inner">
         <a class="brand" href="/" aria-label="AegisID home">
-          <span class="brand-mark" aria-hidden="true">A</span>
+          <img class="brand-mark" src="/favicon.svg" alt="" />
           <span class="brand-name">AegisID</span>
           <span class="brand-tag">prototype</span>
         </a>
@@ -35,54 +36,94 @@
         <div class="view-heading">
           <div>
             <p class="eyebrow">Age verification</p>
-            <h1>Prove you’re old enough. Keep the rest to yourself.</h1>
+            <h1>Prove you’re 18 or older. Keep the rest private.</h1>
             <p class="lede">
-              One private proof replaces an identity check. Your browser proves the age rule and
-              sends only the proof and its verification context.
+              Your browser checks the age rule and sends a private proof—not your birth date or
+              credential ID—to the verifier.
             </p>
           </div>
           <div class="heading-actions">
-            <button id="newChallenge" class="button button-secondary" type="button">
-              New challenge
-            </button>
+            <img
+              class="proof-art"
+              src="/assets/proof-path.svg"
+              alt="A credential stays on the device while a private proof is checked."
+              width="232"
+              height="152"
+            />
           </div>
         </div>
 
-        <div class="session" aria-label="Current challenge">
-          <div class="session-item">
-            <span class="label">Verifier</span>
-            <span id="verifierName" class="value">-</span>
+        <ol class="journey" aria-label="Verification steps">
+          <li data-journey-step="1">
+            <span class="journey-number">1</span>
+            <span>Choose a credential</span>
+          </li>
+          <li data-journey-step="2">
+            <span class="journey-number">2</span>
+            <span>Prove it on this device</span>
+          </li>
+          <li data-journey-step="3">
+            <span class="journey-number">3</span>
+            <span>Get a clear result</span>
+          </li>
+        </ol>
+
+        <div id="requestBar" class="request-bar" data-state="pending">
+          <div class="request-copy">
+            <span class="request-dot" aria-hidden="true"></span>
+            <span id="challengeState" role="status" aria-live="polite"
+              >Preparing a secure request…</span
+            >
+            <span class="request-expiry" aria-live="off">· <span id="expires">-</span></span>
           </div>
-          <div class="session-item">
-            <span class="label">Application id</span>
-            <span id="appId" class="value mono truncate">-</span>
-          </div>
-          <div class="session-item">
-            <span class="label">Reference date</span>
-            <span id="refDate" class="value mono">-</span>
-          </div>
-          <div class="session-item">
-            <span class="label">Nonce</span>
-            <span id="nonce" class="value mono truncate">-</span>
-          </div>
-          <div class="session-item">
-            <span class="label">Expires in</span>
-            <span id="expires" class="value mono">-</span>
-          </div>
+          <button id="newChallenge" class="text-button" type="button">Refresh request</button>
         </div>
+
+        <details class="advanced-session">
+          <summary>
+            Request details
+            <span>Optional technical information</span>
+          </summary>
+          <div class="session" aria-label="Current challenge">
+            <div class="session-item">
+              <span class="label">Verifier</span>
+              <span id="verifierName" class="value">-</span>
+            </div>
+            <div class="session-item">
+              <span class="label">Application id</span>
+              <span id="appId" class="value mono truncate">-</span>
+            </div>
+            <div class="session-item">
+              <span class="label">Reference date</span>
+              <span id="refDate" class="value mono">-</span>
+            </div>
+            <div class="session-item">
+              <span class="label">Nonce</span>
+              <span id="nonce" class="value mono truncate">-</span>
+            </div>
+          </div>
+        </details>
 
         <div class="layout">
           <div class="column">
             <section class="panel">
               <div class="panel-head">
-                <h2>Your credential</h2>
-                <span class="muted small">processed on this device</span>
+                <h2>Choose a credential</h2>
+                <span class="muted small">stays on this device</span>
+              </div>
+
+              <div class="demo-note">
+                <span class="demo-label">Sample data</span>
+                <span
+                  >Built-in credentials are synthetic examples. Import a compatible signed
+                  credential to try your own.</span
+                >
               </div>
 
               <div class="credential-import">
                 <div class="import-copy">
-                  <strong>Have a signed credential?</strong>
-                  <span>Choose a credential JSON file. It stays in this browser.</span>
+                  <strong>Use your own credential</strong>
+                  <span>Choose an AegisID credential JSON file. It is read locally.</span>
                 </div>
                 <input
                   id="credentialFile"
@@ -93,7 +134,7 @@
                 <label
                   class="button button-secondary button-small import-button"
                   for="credentialFile"
-                  >Choose file</label
+                  >Import JSON</label
                 >
               </div>
               <p
@@ -111,17 +152,19 @@
                 aria-label="Credential"
               ></div>
 
-              <dl id="credentialDetails" class="details"></dl>
+              <details class="credential-details">
+                <summary>See credential data on this device</summary>
+                <dl id="credentialDetails" class="details"></dl>
+              </details>
 
               <div class="actions">
                 <button id="proveButton" class="button button-primary" type="button">
-                  Verify eligibility
+                  Check eligibility
                 </button>
               </div>
               <p class="fineprint">
-                A Groth16 proof is created and checked in one step. The request omits your date of
-                birth, credential ID, signature, and full issuer key. The issuer hash is public.
-                Demo data is synthetic.
+                Your browser creates the proof and sends it with a short-lived request. Your birth
+                date, credential ID, signature, and full issuer key stay on this device.
               </p>
             </section>
 
@@ -138,11 +181,11 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Groth16 proof</td>
+                    <td>Proof that the 18+ rule is met</td>
                     <td>Date of birth</td>
                   </tr>
                   <tr>
-                    <td>Nullifier, reference date, application id, nonce, issuer key hash</td>
+                    <td>One-time signal, app id, request nonce, trusted issuer hash</td>
                     <td>Credential UID</td>
                   </tr>
                   <tr>
@@ -166,20 +209,17 @@
                 </div>
               </div>
               <div id="result" class="result">
-                <p class="result-title">Ready when you are</p>
+                <p class="result-title">Ready to check</p>
                 <p class="result-text">
-                  Choose a credential and verify eligibility. The proof is generated here.
+                  Choose a sample credential or import your own, then check eligibility. Your
+                  private proof is created here.
                 </p>
               </div>
               <div id="proofMeta" class="meta-grid" hidden></div>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">
-                <h2>Session log</h2>
-                <button id="clearLog" class="text-button" type="button">Clear</button>
-              </div>
-              <ol id="log" class="log"></ol>
+              <details id="receiptDetails" class="receipt-details" hidden>
+                <summary>View receipt JSON</summary>
+                <pre id="receiptPayload" class="receipt-code"></pre>
+              </details>
             </section>
           </div>
         </div>
@@ -189,10 +229,10 @@
         <div class="view-heading">
           <div>
             <p class="eyebrow">Test bench</p>
-            <h1>Run the acceptance cases against the live API.</h1>
+            <h1>Explore the verifier’s test cases.</h1>
             <p class="lede">
-              Each case requests a fresh challenge and generates a real proof in this tab. The
-              server only verifies proofs; it never runs the prover.
+              These cases generate real proofs in your browser. They’re enabled only in demo mode,
+              where the nullifier registry can be reset safely.
             </p>
           </div>
           <div class="heading-actions">
@@ -223,9 +263,17 @@
           </div>
         </div>
         <p class="fineprint">
-          Reset is available only when the server runs with <code>AEGIS_DEMO=1</code>. A production
-          deployment should remove that flag and use a persistent store.
+          The production test bench is read-only. Each real verification uses a one-time credential,
+          so running cases against a live registry could consume the sample credential.
         </p>
+        <details class="log-details">
+          <summary>Developer activity log</summary>
+          <div class="log-heading">
+            <span class="muted small">Recent events from this tab</span>
+            <button id="clearLog" class="text-button" type="button">Clear</button>
+          </div>
+          <ol id="log" class="log"></ol>
+        </details>
       </section>
 
       <section id="view-protocol" class="view" hidden>

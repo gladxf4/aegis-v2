@@ -41,10 +41,20 @@ const el = {
   resetRegistry: document.getElementById("resetRegistry"),
   testSummary: document.getElementById("testSummary"),
   storeMode: document.getElementById("storeMode"),
-  healthLine: document.getElementById("healthLine")
+  healthLine: document.getElementById("healthLine"),
+  challengeState: document.getElementById("challengeState"),
+  requestBar: document.getElementById("requestBar"),
+  journeySteps: Array.from(document.querySelectorAll("[data-journey-step]")),
+  receiptDetails: document.getElementById("receiptDetails"),
+  receiptPayload: document.getElementById("receiptPayload")
 };
 
 let expiryTimer = null;
+
+function setChallengeStatus(message, status) {
+  el.challengeState.textContent = message;
+  el.requestBar.dataset.state = status;
+}
 
 const SCENARIOS = [
   {
@@ -156,6 +166,8 @@ function setResult(kind, badge, title, text, meta = []) {
   el.copyReceipt.hidden = kind !== "verified";
   if (kind !== "verified") {
     state.receipt = null;
+    el.receiptDetails.hidden = true;
+    el.receiptPayload.textContent = "";
   }
   el.result.className = `result${kind ? ` is-${kind}` : ""}`;
   el.statusBadge.className = `badge${kind ? ` is-${kind}` : ""}`;
@@ -237,12 +249,36 @@ function updateButtons() {
     state.testRunning ||
     state.submitted;
   el.proveButton.textContent = state.proving
-    ? "Creating private proof…"
+    ? "Creating proof on this device…"
     : state.verifying
-      ? "Checking proof…"
+      ? "Checking eligibility…"
       : state.proof && !state.submitted
-        ? "Retry verification"
-        : "Verify eligibility";
+        ? "Try verification again"
+        : "Check eligibility";
+  el.newChallenge.disabled = state.proving || state.verifying;
+  renderJourney();
+}
+
+function renderJourney() {
+  const currentStep =
+    state.verifying || state.submitted
+      ? 3
+      : state.proving
+        ? 2
+        : !state.selected || !state.challenge || state.expired
+          ? 1
+          : 2;
+
+  for (const item of el.journeySteps) {
+    const step = Number(item.dataset.journeyStep);
+    item.classList.toggle("is-current", step === currentStep);
+    item.classList.toggle("is-complete", step < currentStep);
+    if (step === currentStep) {
+      item.setAttribute("aria-current", "step");
+    } else {
+      item.removeAttribute("aria-current");
+    }
+  }
 }
 
 async function readJson(response) {
@@ -298,6 +334,7 @@ function startExpiry() {
     if (remaining <= 0 && !state.expired) {
       state.expired = true;
       el.expires.textContent = "expired";
+      setChallengeStatus("Request expired — refresh to continue", "expired");
       updateButtons();
       if (!state.verifying && !state.submitted) {
         setResult(
@@ -320,8 +357,12 @@ async function newChallenge() {
     return;
   }
   el.newChallenge.disabled = true;
+  setChallengeStatus("Preparing a secure request…", "pending");
   setNotice("");
   try {
+    state.challenge = null;
+    state.expired = false;
+    state.submitted = false;
     const body = await getChallenge();
     state.challenge = body;
     state.proof = null;
@@ -329,16 +370,18 @@ async function newChallenge() {
     state.expired = false;
     renderSession();
     startExpiry();
+    setChallengeStatus("Secure request ready", "ready");
     setResult(
       "",
       "Idle",
-      "No proof submitted",
-      "Generate a proof, then submit it to the verifier."
+      "Ready to check",
+      "Your browser will create a private proof, then show the verifier’s answer here."
     );
     updateButtons();
     addLog("Challenge issued");
   } catch (error) {
     setNotice(error.message, true);
+    setChallengeStatus("Could not prepare a request — try refreshing", "error");
     state.challenge = null;
     updateButtons();
   } finally {
@@ -366,13 +409,12 @@ function renderCredentials() {
     title.textContent = credential.label || "Imported credential";
     const description = document.createElement("span");
     description.className = "credential-desc";
-    description.textContent = `${formatDate(credential.dob)} · ${credential.description || "Signed credential"}`;
+    description.textContent = credential.description || "Signed credential";
     body.append(title, description);
 
     const tag = document.createElement("span");
-    tag.className = `tag${credential.kind === "invalid" ? " tag-invalid" : ""}`;
-    tag.textContent =
-      credential.kind === "imported" ? "local" : credential.kind === "valid" ? "valid" : "invalid";
+    tag.className = `tag${credential.kind === "imported" ? " tag-imported" : " tag-sample"}`;
+    tag.textContent = credential.kind === "imported" ? "Imported" : "Sample";
 
     label.append(input, body, tag);
     el.credentialList.append(label);
@@ -406,7 +448,12 @@ function selectCredential(credential) {
     detail("Issuer signature", "Present", credential.signature.r8x)
   );
 
-  setResult("", "Idle", "No proof submitted", "Generate a proof, then submit it to the verifier.");
+  setResult(
+    "",
+    "Idle",
+    "Ready to check",
+    "Your browser will create a private proof, then show the verifier’s answer here."
+  );
   updateButtons();
 }
 
@@ -547,8 +594,8 @@ async function submit() {
       setResult(
         "verified",
         "Verified",
-        "Access granted",
-        "The verifier accepted the proof and recorded the nullifier.",
+        "Eligibility confirmed",
+        "The verifier accepted this one-time proof. Your birth date and credential ID stayed on this device.",
         [
           { label: "Nullifier", value: short(body.nullifier, 10, 8), title: body.nullifier },
           { label: "Verification time", value: `${body.verify_ms} ms` },
@@ -556,12 +603,29 @@ async function submit() {
           { label: "Reference date", value: formatDate(body.ref_date) }
         ]
       );
+      el.receiptPayload.textContent = JSON.stringify(state.receipt, null, 2);
+      el.receiptDetails.hidden = false;
       addLog(`Verifier accepted proof in ${body.verify_ms} ms`);
     } else {
       state.submitted = true;
       const code = body && body.error ? body.error : `HTTP_${response.status}`;
       const message = body && body.message ? body.message : "Proof was rejected.";
-      setResult("rejected", "Rejected", "Access denied", `${code}: ${message}`);
+      const nextStep = {
+        CHALLENGE_USED: "Refresh the request and check eligibility again.",
+        CHALLENGE_EXPIRED: "Refresh the request to get a new expiry time.",
+        CHALLENGE_INVALID: "Refresh the request and try again.",
+        DUPLICATE_NULLIFIER:
+          "This credential was already used for this app. Try a newly issued credential.",
+        UNTRUSTED_ISSUER: "Use a credential issued by an issuer this verifier recognizes.",
+        PROOF_INVALID: "Choose another credential or import a valid signed credential.",
+        STORE_UNAVAILABLE: "The verifier could not save this result. Wait a moment and try again."
+      }[code];
+      setResult(
+        "rejected",
+        "Not accepted",
+        "Proof not accepted",
+        `${message}${nextStep ? ` ${nextStep}` : ""}`
+      );
       addLog(`Verifier rejected proof: ${code}`);
     }
   } catch (error) {
@@ -688,6 +752,8 @@ function renderTests() {
     button.type = "button";
     button.className = "button button-secondary button-small";
     button.textContent = "Run";
+    button.disabled = !(state.health && state.health.demo_mode);
+    button.title = button.disabled ? "Available only in demo mode" : "Run this case";
     button.addEventListener("click", () => runScenario(scenario));
     actionCell.append(button);
 
@@ -713,7 +779,9 @@ function updateTestSummary() {
   }
   el.testSummary.textContent =
     passed + failed === 0
-      ? "No cases run."
+      ? state.health && !state.health.demo_mode
+        ? "Case runs are disabled on the production verifier."
+        : "No cases run."
       : `${passed} passed, ${failed} failed, ${pending} not run.`;
 }
 
@@ -738,7 +806,7 @@ function setRowResult(scenario, status, text) {
 
 function setTestButtonsDisabled(disabled) {
   for (const button of el.testRows.querySelectorAll("button")) {
-    button.disabled = disabled;
+    button.disabled = disabled || !(state.health && state.health.demo_mode);
   }
   el.runAll.disabled = disabled || !(state.health && state.health.demo_mode);
   el.resetRegistry.disabled = disabled;
@@ -918,6 +986,9 @@ async function loadHealth() {
     el.resetRegistry.hidden = !body.demo_mode;
     el.runAll.disabled = !body.demo_mode;
     el.runAll.title = body.demo_mode ? "" : "Requires AEGIS_DEMO=1";
+    if (!body.demo_mode) {
+      el.testSummary.textContent = "Case runs are disabled on the production verifier.";
+    }
     if (!body.ok) {
       setNotice("The verifier is not configured. Check /api/health for details.", true);
     }
@@ -959,7 +1030,7 @@ function bindEvents() {
       );
     } catch (error) {
       setNotice(
-        "Clipboard access is unavailable. Copy the receipt from the result details instead.",
+        "Clipboard access is unavailable. Open “View receipt JSON” below and copy it manually.",
         true
       );
     }
